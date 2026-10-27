@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0b0b1a">
+<title>GRADE</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#0b0b1a; --panel:#13132a; --panel2:#1b1b36;
+  --gold:#f5c542; --gold2:#c98f1a; --gold3:#7a4e0a;
+  --text:#f4f1e6; --muted:#9a98b5; --ok:#42d392; --bad:#ff5c6c;
+  --line:rgba(245,197,66,.20);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:radial-gradient(circle at 50% -15%,#262052 0,var(--bg) 58%) fixed,var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  overflow-x:hidden;user-select:none;-webkit-user-select:none;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+
+/* En-tete */
+.top{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
+  background:linear-gradient(#0b0b1aF2,#0b0b1ae0);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:3px;font-size:18px;
+  background:linear-gradient(90deg,#fff3b0,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo{
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#2a1a00;font-weight:900;font-size:15px;
+  background:radial-gradient(circle at 30% 25%,#fff6c8,var(--gold) 35%,var(--gold2) 75%,var(--gold3));
+  box-shadow:0 0 14px rgba(245,197,66,.5);-webkit-text-fill-color:#2a1a00;
+}
+.hdr-bal{font-weight:800;font-size:16px;color:var(--gold);font-variant-numeric:tabular-nums}
+.hdr-bal small{font-size:11px;color:var(--muted);font-weight:700;margin-left:2px}
+
+/* Structure */
+main{padding:14px 14px 104px;max-width:520px;margin:0 auto}
+.screen{display:none;animation:fade .25s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.title{font-size:22px;font-weight:800;margin:4px 2px 4px}
+.title span{color:var(--gold)}
+.muted{color:var(--muted);font-size:13px;line-height:1.45;margin:0 2px 14px}
+.card{
+  background:linear-gradient(160deg,var(--panel2),var(--panel));
+  border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+.lbl{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
+.big{font-size:38px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums;
+  background:linear-gradient(90deg,#fff3b0,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.big .unit{font-size:16px;-webkit-text-fill-color:var(--muted);color:var(--muted);font-weight:700}
+.sub{color:var(--muted);font-size:13px;margin-top:6px}
+.sub b{color:var(--gold)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;font-weight:600}
+
+/* Bouton principal */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 16px;border-radius:14px;font-weight:800;font-size:14px;
+  background:linear-gradient(180deg,#ffe07a,var(--gold) 50%,var(--gold2));color:#2a1a00;
+  box-shadow:0 6px 18px rgba(245,197,66,.25);transition:transform .1s,filter .15s;
+}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:rgba(245,197,66,.08);color:var(--gold);border:1px solid var(--line);box-shadow:none}
+.btn.full{width:100%}
+.btn.sm{padding:9px 12px;font-size:13px;border-radius:12px}
+.btn.big-btn{padding:16px;font-size:18px;border-radius:18px;margin-top:6px}
+
+/* Minage */
+.mine-stage{
+  position:relative;display:grid;place-items:center;margin:10px auto 4px;
+  width:min(72vw,280px);aspect-ratio:1;
+}
+.halo{
+  position:absolute;inset:-8%;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,197,66,.30),transparent 65%);
+  animation:halo 3s ease-in-out infinite;pointer-events:none;
+}
+.mine-stage.locked .halo{opacity:.15;animation:none}
+@keyframes halo{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+.coin{
+  position:relative;width:100%;height:100%;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 32% 26%,#fff8d2 0,#ffe07a 16%,var(--gold) 38%,var(--gold2) 72%,var(--gold3) 100%);
+  box-shadow:0 0 50px rgba(245,197,66,.45),inset 0 -12px 26px rgba(90,50,0,.45),inset 0 6px 14px rgba(255,255,255,.35);
+  transition:transform .12s cubic-bezier(.2,.8,.2,1),filter .3s;
+  will-change:transform;touch-action:manipulation;
+}
+.coin:not(:disabled):active{transform:scale(.93)}
+.coin::before{content:"";position:absolute;inset:8%;border-radius:50%;border:2px dashed rgba(90,50,0,.45)}
+.coin::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:linear-gradient(120deg,transparent 35%,rgba(255,255,255,.35) 48%,transparent 60%);
+  transform:translateX(-60%);animation:shine 4.5s ease-in-out infinite;
+}
+@keyframes shine{0%,55%{transform:translateX(-60%)}100%{transform:translateX(60%)}}
+.coin.locked{filter:grayscale(.85) brightness(.6);box-shadow:inset 0 -12px 26px rgba(0,0,0,.5)}
+.coin.locked::after{animation:none;opacity:0}
+.coin.bump{animation:bump .25s ease}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.05)}100%{transform:scale(1)}}
+.coin-inner{position:relative;z-index:1;text-align:center;color:#3a2300;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.coin-ico{display:block;font-size:46px;line-height:1}
+.coin-mnx{display:block;font-size:26px;font-weight:900;letter-spacing:3px;margin-top:4px}
+.float{
+  position:absolute;pointer-events:none;font-weight:900;font-size:26px;color:var(--gold);z-index:5;
+  text-shadow:0 0 12px rgba(245,197,66,.9),0 2px 0 #3a2300;transform:translate(-50%,-50%);
+  animation:floatUp 1.1s ease-out forwards;white-space:nowrap;
+}
+@keyframes floatUp{0%{opacity:1;margin-top:0}100%{opacity:0;margin-top:-120px}}
+.spark{
+  position:absolute;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:4;
+  background:radial-gradient(circle,#fff6c8,var(--gold));box-shadow:0 0 8px var(--gold);
+  animation:spark .7s ease-out forwards;
+}
+@keyframes spark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
+
+.status{text-align:center;font-size:15px;font-weight:700;margin:12px 0 4px;color:var(--gold);font-variant-numeric:tabular-nums}
+.status.ok{color:var(--ok)}
+.status.wait{color:var(--muted)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}
+.stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+.stat b{display:block;margin-top:4px;font-size:17px;font-variant-numeric:tabular-nums}
+
+/* Taches */
+.task{display:flex;align-items:center;gap:12px}
+.task-body{flex:1;min-width:0}
+.task-title{font-weight:700;font-size:15px}
+.task-prog{color:var(--muted);font-size:12.5px;margin-top:3px}
+.task-reward{color:var(--gold);font-weight:800;font-size:13px;margin-top:4px}
+.task-act{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.done-tag{color:var(--ok);font-weight:800;font-size:13px}
+
+/* Classement */
+.lb-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--panel);
+  border:1px solid rgba(255,255,255,.05);margin-bottom:8px}
+.lb-row.me{border-color:var(--gold);background:linear-gradient(90deg,rgba(245,197,66,.16),var(--panel))}
+.lb-rank{width:34px;text-align:center;font-weight:900;font-size:16px;color:var(--muted)}
+.lb-name{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-bal{font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* Amis */
+.link-box{display:flex;gap:8px;margin-top:10px}
+.link-box input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:12px;color:var(--text);
+  padding:12px;font-size:13px;user-select:all;-webkit-user-select:all}
+.friend{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}
+.friend small{color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:18px 8px;font-size:14px}
+
+/* Portefeuille & profil */
+.profile{display:flex;align-items:center;gap:14px}
+.avatar{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:900;color:#2a1a00;flex:0 0 64px;
+  background:radial-gradient(circle at 30% 25%,#fff6c8,var(--gold) 40%,var(--gold2));box-shadow:0 0 20px rgba(245,197,66,.4)}
+.pname{font-size:19px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pmeta{color:var(--muted);font-size:13px;margin-top:3px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--muted)}
+.kv b{font-variant-numeric:tabular-nums;text-align:right}
+input.field{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px;font-size:14px;margin-top:10px;user-select:text;-webkit-user-select:text}
+input.field:focus{outline:none;border-color:var(--gold)}
+.hint{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.45}
+.addr{color:var(--text);word-break:break-all;font-size:13px;margin-top:6px}
+
+/* Reglages du compte */
+.set-title{font-size:15px;font-weight:800;color:var(--gold);margin:4px 2px 10px;letter-spacing:.5px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.set-row:last-child{border-bottom:0}
+.set-row .k{font-size:14px;font-weight:700}
+.set-row .k small{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:2px}
+.switch{position:relative;width:52px;height:30px;border-radius:30px;background:#2a2a48;border:1px solid var(--line);flex:0 0 52px;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#cfcbe6;transition:transform .2s}
+.switch.on{background:linear-gradient(90deg,var(--gold2),var(--gold))}
+.switch.on::after{transform:translateX(22px);background:#2a1a00}
+.btn.danger{border:1px solid rgba(255,92,108,.5);color:#ff9aa5;background:rgba(255,92,108,.08);box-shadow:none}
+.confirm-box{margin-top:10px;padding:12px;border-radius:14px;border:1px solid rgba(255,92,108,.5);background:rgba(255,92,108,.08)}
+.confirm-box p{font-size:13px;line-height:1.45;color:#ffd0d6;margin-bottom:10px}
+.confirm-box .row-btn{display:flex;gap:8px}
+.confirm-box .row-btn button{flex:1}
+
+/* Navigation basse */
+nav.bottom{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:space-around;
+  padding:8px 6px calc(env(safe-area-inset-bottom) + 8px);
+  background:linear-gradient(#0b0b1aee,#0b0b1aff);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+}
+nav.bottom button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;color:var(--muted);font-size:10.5px;font-weight:700;border-radius:12px;max-width:100px}
+nav.bottom button .ni{font-size:19px;line-height:1}
+nav.bottom button.active{color:var(--gold);background:rgba(245,197,66,.09)}
+
+/* Toast et portail */
+#toast{
+  position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 64px);transform:translate(-50%,-12px);opacity:0;z-index:60;
+  max-width:92vw;padding:11px 16px;border-radius:14px;font-size:14px;font-weight:700;text-align:center;pointer-events:none;
+  background:var(--panel2);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.5);transition:all .25s ease;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.ok{border-color:rgba(66,211,146,.6);color:var(--ok)}
+#toast.bad{border-color:rgba(255,92,108,.6);color:#ffb3bb}
+.gate{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;background:rgba(11,11,26,.96)}
+.gate.hidden{display:none}
+.gate-box{max-width:360px;text-align:center}
+.gate-box .coin-mini{width:84px;height:84px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#3a2300;
+  background:radial-gradient(circle at 30% 25%,#fff6c8,var(--gold) 40%,var(--gold2) 80%,var(--gold3));box-shadow:0 0 30px rgba(245,197,66,.4)}
+.gate-box h2{font-size:20px;margin-bottom:10px}
+.gate-box p{color:var(--muted);font-size:14px;line-height:1.5}
+.loading{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
+
+.hidden{display:none !important}
+
+@media (min-width:600px){ .mine-stage{width:300px} }
+@media (max-width:360px){ .big{font-size:32px} .stats-grid{gap:6px} .stat b{font-size:15px} }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="gate" class="gate hidden">
+  <div class="gate-box">
+    <div class="coin-mini">GRA</div>
+    <h2>Ouvre GRADE depuis Telegram</h2>
+    <p>Cette app fonctionne uniquement dans Telegram. Ouvre le bot et appuie sur le bouton "Ouvrir GRADE".</p>
+  </div>
+</div>
+
+<header class="top">
+  <div class="brand"><span class="logo">M</span>GRADE</div>
+  <div class="hdr-bal"><span id="hdrBal">0</span><small>GRA</small></div>
+</header>
+
+<main>
+
+  <!-- MINER -->
+  <section class="screen active" id="s-mine">
+    <div class="card" style="margin-bottom:0">
+      <div class="lbl">Ton solde</div>
+      <div class="big"><span id="balMain">0</span> <span class="unit">GRA</span></div>
+      <div class="sub">Gain par minage : <b id="rewardTxt">50</b> GRA · un minage par heure</div>
+    </div>
+
+    <div class="mine-stage" id="stage">
+      <div class="halo"></div>
+      <button id="coin" class="coin" aria-label="Miner">
+        <span class="coin-inner">
+          <span class="coin-ico">⛏</span>
+          <span class="coin-mnx">GRA</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="status" id="mineStatus">Chargement...</div>
+    <button class="btn full big-btn" id="btnMine" disabled>⛏ Miner</button>
+
+    <div class="stats-grid">
+      <div class="stat"><span>Rang</span><b id="rankTxt">-</b></div>
+      <div class="stat"><span>Minages</span><b id="minesTxt">0</b></div>
+      <div class="stat"><span>Amis</span><b id="refTxt">0</b></div>
+    </div>
+    <div class="hint" style="text-align:center;margin-top:12px">
+      Reviens chaque heure pour miner encore. Le compte à rebours démarre après chaque minage.
+    </div>
+  </section>
+
+  <!-- TACHES -->
+  <section class="screen" id="s-tasks">
+    <h2 class="title">Tâches <span>✅</span></h2>
+    <p class="muted">Termine les tâches pour gagner des GRA bonus. Chaque tâche se réclame une seule fois.</p>
+    <div id="taskList"><div class="loading">Chargement...</div></div>
+  </section>
+
+  <!-- AMIS -->
+  <section class="screen" id="s-friends">
+    <h2 class="title">Amis <span>👥</span></h2>
+    <p class="muted">
+      Invite tes amis avec ton lien. Tu gagnes <b id="bonusTxt" style="color:var(--gold)">500</b> GRA
+      pour chaque ami inscrit, et ton ami reçoit <b id="welcomeTxt" style="color:var(--gold)">250</b> GRA.
+    </p>
+    <div class="card">
+      <div class="lbl">Ton lien de parrainage</div>
+      <div class="link-box">
+        <input id="refLink" readonly value="">
+        <button class="btn sm ghost" id="btnCopy">Copier</button>
+      </div>
+      <button class="btn full" id="btnShare" style="margin-top:12px">📤 Partager le lien</button>
+    </div>
+    <div class="stats-grid" style="margin-bottom:12px">
+      <div class="stat"><span>Amis</span><b id="frCount">0</b></div>
+      <div class="stat" style="grid-column:span 2"><span>Gains parrainage</span><b id="frEarned">0 GRA</b></div>
+    </div>
+    <div class="card">
+      <div class="lbl" style="margin-bottom:6px">Tes filleuls</div>
+      <div id="frList"><div class="loading">Chargement...</div></div>
+    </div>
+  </section>
+
+  <!-- PORTEFEUILLE -->
+  <section class="screen" id="s-wallet">
+    <h2 class="title">Portefeuille <span>💼</span></h2>
+    <p class="muted">Ton solde en GRA et l'adresse où tu veux recevoir tes gains. Les retraits seront disponibles plus tard.</p>
+    <div class="card">
+      <div class="lbl">Solde disponible</div>
+      <div class="big" style="font-size:32px"><span id="walBal">0</span> <span class="unit">GRA</span></div>
+    </div>
+    <div class="card">
+      <div class="lbl">Adresse actuelle</div>
+      <div class="addr" id="walletNow">Aucune adresse enregistrée</div>
+      <input id="walletIn" class="field" type="text" maxlength="120" placeholder="Colle ton adresse de portefeuille" autocomplete="off">
+      <button class="btn full" id="btnWallet" style="margin-top:10px">Enregistrer l'adresse</button>
+      <div class="hint">Ajouter ton portefeuille te rapporte aussi 200 GRA via la tâche correspondante.</div>
+    </div>
+  </section>
+
+  <!-- PROFIL -->
+  <section class="screen" id="s-profile">
+    <h2 class="title">Profil <span>👤</span></h2>
+    <div class="card">
+      <div class="profile">
+        <div class="avatar" id="avatar">M</div>
+        <div style="min-width:0">
+          <div class="pname" id="pName">Mineur</div>
+          <div class="pmeta" id="pMeta">-</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="kv"><span>Solde</span><b id="kvBal">0 GRA</b></div>
+      <div class="kv"><span>Rang</span><b id="kvRank">-</b></div>
+      <div class="kv"><span>Minages effectués</span><b id="kvMines">0</b></div>
+      <div class="kv"><span>Amis parrainés</span><b id="kvRef">0</b></div>
+      <div class="kv"><span>Membre depuis</span><b id="kvSince">-</b></div>
+    </div>
+    <div class="title" style="font-size:17px;margin:14px 2px 8px">Classement <span>🏆</span></div>
+    <div id="topList"><div class="loading">Chargement...</div></div>
+
+    <div class="title" style="font-size:17px;margin:18px 2px 8px">Réglages du compte <span>⚙️</span></div>
+    <div class="card">
+      <div class="set-title">Pseudo affiché</div>
+      <div class="muted" style="margin:0 0 4px">Ce nom apparaît dans le classement et la liste de tes filleuls. Laisse vide pour utiliser ton prénom Telegram.</div>
+      <input id="setName" class="field" type="text" maxlength="24" placeholder="Ton pseudo (24 caractères max)" autocomplete="off">
+      <button class="btn full" id="btnSetName" style="margin-top:10px">Enregistrer le pseudo</button>
+    </div>
+    <div class="card">
+      <div class="set-title">Portefeuille</div>
+      <div class="lbl">Adresse actuelle</div>
+      <div class="addr" id="setWalletNow">Aucune adresse enregistrée</div>
+      <input id="setWalletIn" class="field" type="text" maxlength="120" placeholder="Colle ou modifie ton adresse" autocomplete="off">
+      <button class="btn full" id="btnSetWallet" style="margin-top:10px">Enregistrer l'adresse</button>
+    </div>
+    <div class="card">
+      <div class="set-title">Préférences</div>
+      <div class="set-row">
+        <div class="k">Langue<small>Français (langue fixe)</small></div>
+        <b style="color:var(--gold)">Français</b>
+      </div>
+      <div class="set-row">
+        <div class="k">Notifications<small>Rappels quand ton minage est prêt</small></div>
+        <button class="switch" id="swNotif" aria-label="Notifications" role="switch" aria-checked="true"></button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="set-title">Zone de danger</div>
+      <div class="muted" style="margin:0 0 10px">Remet ton solde et tes minages à zéro, et efface tes tâches réclamées. Tes amis, ton portefeuille et ton pseudo sont conservés.</div>
+      <button class="btn full danger" id="btnReset">Réinitialiser mon compte</button>
+      <div id="resetBox" class="confirm-box hidden">
+        <p>Action définitive : ton solde GRA et tes minages repartent à zéro. Confirmer ?</p>
+        <div class="row-btn">
+          <button class="btn sm ghost" id="btnResetNo">Annuler</button>
+          <button class="btn sm danger" id="btnResetYes">Oui, réinitialiser</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="bottom">
+  <button data-tab="mine" class="active"><span class="ni">⛏</span>Miner</button>
+  <button data-tab="tasks"><span class="ni">✅</span>Tâches</button>
+  <button data-tab="friends"><span class="ni">👥</span>Amis</button>
+  <button data-tab="wallet"><span class="ni">💼</span>Portefeuille</button>
+  <button data-tab="profile"><span class="ni">👤</span>Profil</button>
+</nav>
+
+<script>
+(function(){
+"use strict";
+
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+const INIT = tg ? (tg.initData || "") : "";
+if (tg) {
+  try { tg.ready(); tg.expand(); } catch (e) {}
+  try { tg.setHeaderColor("#0b0b1a"); tg.setBackgroundColor("#0b0b1a"); } catch (e) {}
+}
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = (n) => Math.floor(Number(n) || 0).toLocaleString("fr-FR");
+const pad2 = (n) => (n < 10 ? "0" : "") + n;
+const MEDALS = ["🥇","🥈","🥉"];
+
+// Etat local. Le serveur est la seule reference: le client ne fait qu'afficher le compte a rebours.
+const S = {
+  me: null, tasks: [],
+  nextAt: 0,        // timestamp serveur (secondes) du prochain minage, 0 = maintenant
+  offset: 0,        // decalage horloge serveur - horloge du telephone
+  reward: 1000, cur: "GRA",
+  busy: false,
+};
+
+function haptic(kind) {
+  try {
+    if (!tg || !tg.HapticFeedback) return;
+    if (kind === "light") tg.HapticFeedback.impactOccurred("light");
+    else if (kind === "success") tg.HapticFeedback.notificationOccurred("success");
+    else if (kind === "error") tg.HapticFeedback.notificationOccurred("error");
+  } catch (e) {}
+}
+
+let toastT = null;
+function toast(msg, kind) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.className = "show " + (kind || "");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { el.className = ""; }, 2600);
+}
+
+function showGate() { $("#gate").classList.remove("hidden"); }
+
+async function call(action, payload) {
+  let res;
+  try {
+    res = await fetch("/api/" + action, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ initData: INIT }, payload || {})),
+    });
+  } catch (e) {
+    return { ok: false, error: "Connexion impossible. Vérifie ton réseau." };
+  }
+  if (res.status === 401) { showGate(); return { ok: false, error: "Session invalide. Ouvre GRADE depuis Telegram." }; }
+  try { return await res.json(); }
+  catch (e) { return { ok: false, error: "Réponse invalide du serveur." }; }
+}
+
+/* ---------- Temps et compte a rebours ---------- */
+function serverNow() { return Date.now() / 1000 + S.offset; }
+function remaining() {
+  if (!S.nextAt) return 0;
+  return Math.max(0, S.nextAt - serverNow());
+}
+// Format "Xh Ym" (arrondi a la minute superieure).
+function fmtDur(sec) {
+  const totalMin = Math.ceil(Math.max(0, sec) / 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h + "h " + pad2(m) + "m";
+}
+
+function applyState(d) {
+  if (!d || !d.me) return;
+  S.me = d.me;
+  if (d.tasks) S.tasks = d.tasks;
+  S.nextAt = d.me.can_mine ? 0 : d.me.next_mine_at;
+  S.offset = (d.me.server_now || Date.now() / 1000) - Date.now() / 1000;
+  S.reward = d.me.mine_reward;
+  S.cur = d.me.currency;
+  renderAll();
+}
+
+/* ---------- Minage ---------- */
+function renderMine() {
+  if (!S.me) return;
+  const rem = remaining();
+  const ready = rem <= 0;
+  const hdr = Math.floor(S.me.balance);
+  $("#balMain").textContent = fmt(hdr);
+  $("#hdrBal").textContent = fmt(hdr);
+  $("#rewardTxt").textContent = fmt(S.reward);
+  $("#rankTxt").textContent = "#" + fmt(S.me.rank);
+  $("#minesTxt").textContent = fmt(S.me.mines_count);
+  $("#refTxt").textContent = fmt(S.me.referrals);
+
+  const coin = $("#coin");
+  coin.classList.toggle("locked", !ready);
+  $("#stage").classList.toggle("locked", !ready);
+  coin.disabled = !ready || S.busy;
+  $("#btnMine").disabled = !ready || S.busy;
+  $("#btnMine").textContent = S.busy ? "Minage..." : "⛏ Miner";
+
+  const st = $("#mineStatus");
+  if (S.busy) {
+    st.className = "status wait";
+    st.textContent = "Minage en cours...";
+  } else if (ready) {
+    st.className = "status ok";
+    st.textContent = "Prêt à miner : +" + fmt(S.reward) + " " + S.cur;
+  } else {
+    st.className = "status wait";
+    st.textContent = "Prochain minage dans " + fmtDur(rem);
+  }
+}
+
+function spawnFloat(text) {
+  const stage = $("#stage");
+  const r = stage.getBoundingClientRect();
+  const x = r.width / 2, y = r.height / 2;
+  const el = document.createElement("div");
+  el.className = "float";
+  el.textContent = text;
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  stage.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+  for (let i = 0; i < 10; i++) {
+    const s = document.createElement("span");
+    s.className = "spark";
+    const a = Math.random() * Math.PI * 2;
+    const d = 80 + Math.random() * 60;
+    s.style.left = x + "px";
+    s.style.top = y + "px";
+    s.style.setProperty("--dx", Math.cos(a) * d + "px");
+    s.style.setProperty("--dy", Math.sin(a) * d + "px");
+    stage.appendChild(s);
+    setTimeout(() => s.remove(), 750);
+  }
+}
+
+async function onMine() {
+  if (S.busy || !S.me) return;
+  if (remaining() > 0) {
+    toast("Prochain minage dans " + fmtDur(remaining()), "bad");
+    haptic("error");
+    return;
+  }
+  S.busy = true;
+  renderMine();
+  const coin = $("#coin");
+  coin.classList.remove("bump"); void coin.offsetWidth; coin.classList.add("bump");
+  const d = await call("mine");
+  S.busy = false;
+  if (d.ok) {
+    spawnFloat("+" + fmt(d.gained) + " " + S.cur);
+    toast(d.message || "Minage réussi !", "ok");
+    haptic("success");
+  } else {
+    toast(d.error || "Minage impossible pour le moment.", "bad");
+    haptic("error");
+  }
+  applyState(d);
+}
+
+/* ---------- Taches ---------- */
+function renderTasks() {
+  if (!S.tasks.length || !S.me) return;
+  $("#taskList").innerHTML = S.tasks.map((t) => {
+    let act = "";
+    if (t.claimed) {
+      act = '<span class="done-tag">✓ Réclamée</span>';
+    } else {
+      if (t.link) act += '<button class="btn sm ghost" data-open="' + esc(t.link) + '">Ouvrir</button>';
+      const can = t.available && (t.done || t.id === "join_channel");
+      act += '<button class="btn sm" data-claim="' + esc(t.id) + '" ' + (can ? "" : "disabled") + ">Réclamer</button>";
+    }
+    return '<div class="card task">' +
+      '<div class="task-body">' +
+        '<div class="task-title">' + esc(t.title) + '</div>' +
+        '<div class="task-prog">' + esc(t.progress) + '</div>' +
+        '<div class="task-reward">+' + fmt(t.reward) + ' ' + esc(S.cur) + '</div>' +
+      '</div>' +
+      '<div class="task-act">' + act + '</div>' +
+    '</div>';
+  }).join("");
+}
+
+async function claimTask(id) {
+  const d = await call("task_claim", { task_id: id });
+  if (d.ok) { toast(d.message || "Tâche réclamée !", "ok"); haptic("success"); }
+  else { toast(d.error || "Tâche non réclamable.", "bad"); haptic("error"); }
+  applyState(d);
+}
+
+/* ---------- Amis ---------- */
+function renderFriendsStatic() {
+  if (!S.me) return;
+  $("#frCount").textContent = fmt(S.me.referrals);
+  $("#frEarned").textContent = fmt(S.me.referral_earned) + " " + S.cur;
+  if (S.me.ref_link) $("#refLink").value = S.me.ref_link;
+}
+
+async function loadReferrals() {
+  const d = await call("referrals");
+  if (!d.ok) { toast(d.error || "Parrainage indisponible.", "bad"); return; }
+  if (d.link) {
+    $("#refLink").value = d.link;
+    if (S.me) S.me.ref_link = d.link;
+  }
+  $("#bonusTxt").textContent = fmt(d.bonus);
+  $("#welcomeTxt").textContent = fmt(d.welcome);
+  $("#frCount").textContent = fmt(d.count);
+  $("#frEarned").textContent = fmt(d.earned) + " " + S.cur;
+  if (!d.list.length) {
+    $("#frList").innerHTML = '<div class="empty">Aucun filleul pour le moment. Partage ton lien !</div>';
+  } else {
+    $("#frList").innerHTML = d.list.map((f) =>
+      '<div class="friend"><span>' + esc(f.name) + '</span><small>' +
+      new Date(f.joined * 1000).toLocaleDateString("fr-FR") + '</small></div>'
+    ).join("");
+  }
+}
+
+function copyLink() {
+  const link = S.me && S.me.ref_link;
+  if (!link) { toast("Lien pas encore disponible.", "bad"); return; }
+  const done = () => { toast("Lien copié !", "ok"); haptic("success"); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(done, () => fallbackCopy(done));
+  } else {
+    fallbackCopy(done);
+  }
+}
+function fallbackCopy(done) {
+  const input = $("#refLink");
+  input.focus(); input.select();
+  try { if (document.execCommand("copy")) done(); else toast("Copie impossible, sélectionne le lien.", "bad"); }
+  catch (e) { toast("Copie impossible, sélectionne le lien.", "bad"); }
+}
+
+function shareLink() {
+  const link = S.me && S.me.ref_link;
+  if (!link) { toast("Lien pas encore disponible.", "bad"); return; }
+  const text = "Rejoins-moi sur GRADE et gagne des GRA avec moi !";
+  const url = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent(text);
+  if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
+  else window.open(url, "_blank");
+}
+
+/* ---------- Portefeuille ---------- */
+function renderWallet() {
+  if (!S.me) return;
+  $("#walBal").textContent = fmt(S.me.balance);
+  $("#walletNow").textContent = S.me.wallet || "Aucune adresse enregistrée";
+}
+
+async function saveWallet() {
+  const addr = $("#walletIn").value.trim();
+  if (!addr) { toast("Entre une adresse de portefeuille.", "bad"); return; }
+  const d = await call("wallet_set", { address: addr });
+  if (d.ok) { toast(d.message || "Portefeuille enregistré.", "ok"); $("#walletIn").value = ""; haptic("success"); }
+  else { toast(d.error || "Enregistrement impossible.", "bad"); }
+  applyState(d);
+}
+
+/* ---------- Profil ---------- */
+function renderProfile() {
+  if (!S.me) return;
+  const m = S.me;
+  const name = m.name || "Mineur";
+  $("#avatar").textContent = name.trim().charAt(0).toUpperCase() || "M";
+  $("#pName").textContent = name;
+  $("#pMeta").textContent = (m.username ? "@" + m.username : "Sans pseudo") + " · ID " + m.id;
+  $("#kvBal").textContent = fmt(m.balance) + " " + S.cur;
+  $("#kvRank").textContent = "#" + fmt(m.rank);
+  $("#kvMines").textContent = fmt(m.mines_count);
+  $("#kvRef").textContent = fmt(m.referrals);
+  $("#kvSince").textContent = m.created ? new Date(m.created * 1000).toLocaleDateString("fr-FR") : "-";
+  $("#setWalletNow").textContent = m.wallet || "Aucune adresse enregistrée";
+  $("#swNotif").classList.toggle("on", !!m.notifications);
+  $("#swNotif").setAttribute("aria-checked", m.notifications ? "true" : "false");
+}
+
+async function saveName() {
+  const name = $("#setName").value.trim();
+  const d = await call("settings_name", { name: name });
+  if (d.ok) { toast(d.message || "Pseudo enregistré.", "ok"); $("#setName").value = ""; haptic("success"); }
+  else { toast(d.error || "Enregistrement impossible.", "bad"); haptic("error"); }
+  applyState(d);
+}
+
+async function saveWalletSettings() {
+  const addr = $("#setWalletIn").value.trim();
+  if (!addr) { toast("Entre une adresse de portefeuille.", "bad"); return; }
+  const d = await call("wallet_set", { address: addr });
+  if (d.ok) { toast(d.message || "Portefeuille enregistré.", "ok"); $("#setWalletIn").value = ""; haptic("success"); }
+  else { toast(d.error || "Enregistrement impossible.", "bad"); haptic("error"); }
+  applyState(d);
+}
+
+async function toggleNotif() {
+  const next = !(S.me && S.me.notifications);
+  const d = await call("settings_notifications", { enabled: next });
+  if (d.ok) toast(d.message, "ok"); else toast(d.error || "Réglage non enregistré.", "bad");
+  applyState(d);
+}
+
+async function doReset() {
+  const d = await call("settings_reset", { confirm: "RESET" });
+  $("#resetBox").classList.add("hidden");
+  if (d.ok) { toast(d.message || "Compte réinitialisé.", "ok"); haptic("success"); }
+  else { toast(d.error || "Réinitialisation impossible.", "bad"); haptic("error"); }
+  applyState(d);
+}
+
+async function loadTop() {
+  const d = await call("leaderboard");
+  if (!d.ok) { toast(d.error || "Classement indisponible.", "bad"); return; }
+  if (!d.top.length) { $("#topList").innerHTML = '<div class="empty">Personne n\'a encore miné. Sois le premier !</div>'; return; }
+  $("#topList").innerHTML = d.top.map((r) => {
+    const rank = r.rank <= 3 ? MEDALS[r.rank - 1] : "#" + r.rank;
+    return '<div class="lb-row ' + (r.me ? "me" : "") + '">' +
+      '<div class="lb-rank">' + rank + '</div>' +
+      '<div class="lb-name">' + esc(r.name) + (r.me ? " (toi)" : "") + '</div>' +
+      '<div class="lb-bal">' + fmt(r.balance) + '</div></div>';
+  }).join("") + '<div class="hint" style="text-align:center">Ton rang : #' + fmt(d.my_rank) + '</div>';
+}
+
+function renderAll() {
+  renderMine();
+  renderTasks();
+  renderFriendsStatic();
+  renderWallet();
+  renderProfile();
+}
+
+/* ---------- Navigation ---------- */
+function showTab(name) {
+  $$(".screen").forEach((s) => s.classList.toggle("active", s.id === "s-" + name));
+  $$("nav.bottom button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  window.scrollTo(0, 0);
+  if (name === "friends") loadReferrals();
+  if (name === "profile") loadTop();
+  if (name === "mine") { /* compte a rebours deja actif */ }
+}
+
+/* ---------- Evenements ---------- */
+function bind() {
+  $("#coin").addEventListener("click", onMine);
+  $("#btnMine").addEventListener("click", onMine);
+  $$("nav.bottom button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+  $("#taskList").addEventListener("click", (e) => {
+    const c = e.target.closest("[data-claim]");
+    if (c && !c.disabled) return claimTask(c.dataset.claim);
+    const o = e.target.closest("[data-open]");
+    if (o) {
+      const url = o.dataset.open;
+      if (tg && tg.openTelegramLink && url.startsWith("https://t.me/")) tg.openTelegramLink(url);
+      else window.open(url, "_blank");
+    }
+  });
+  $("#btnCopy").addEventListener("click", copyLink);
+  $("#btnShare").addEventListener("click", shareLink);
+  $("#btnWallet").addEventListener("click", saveWallet);
+  $("#btnSetName").addEventListener("click", saveName);
+  $("#btnSetWallet").addEventListener("click", saveWalletSettings);
+  $("#swNotif").addEventListener("click", toggleNotif);
+  $("#btnReset").addEventListener("click", () => $("#resetBox").classList.toggle("hidden"));
+  $("#btnResetNo").addEventListener("click", () => $("#resetBox").classList.add("hidden"));
+  $("#btnResetYes").addEventListener("click", doReset);
+  $("#refLink").addEventListener("focus", (e) => e.target.select());
+}
+
+/* ---------- Demarrage ---------- */
+async function init() {
+  bind();
+  renderAll();
+  const d = await call("me");
+  if (d.ok) applyState(d);
+  else if (d.error) toast(d.error, "bad");
+
+  // Mise a jour de l'affichage chaque seconde (compte a rebours).
+  setInterval(renderMine, 1000);
+  // Resynchronisation avec le serveur toutes les 60 s (le serveur reste la reference).
+  setInterval(async () => {
+    if (S.busy || document.hidden) return;
+    const r = await call("me");
+    if (r.ok) applyState(r);
+  }, 60000);
+}
+
+init();
+})();
+</script>
+</body>
+</html>
