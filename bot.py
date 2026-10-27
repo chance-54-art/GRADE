@@ -72,6 +72,35 @@ TASKS = [
 ]
 TASK_BY_ID = {t["id"]: t for t in TASKS}
 
+# Ligues (palier = GRAD total du solde)
+LEAGUES = [(0, "Bronze"), (1000, "Argent"), (5000, "Or"), (20000, "Platine"), (100000, "Diamant")]
+# Ameliorations: +10 % du taux par niveau, prix x1.5 a chaque niveau
+UPGRADES = [
+    {"id": "gpu", "title": "GPU", "base": 200},
+    {"id": "ferme", "title": "Ferme", "base": 300},
+    {"id": "noeud", "title": "Noeud", "base": 450},
+    {"id": "serveur", "title": "Serveur", "base": 650},
+    {"id": "pool", "title": "Pool", "base": 900},
+    {"id": "usine", "title": "Usine", "base": 1200},
+]
+UPGRADE_BY_ID = {u["id"]: u for u in UPGRADES}
+UPGRADE_STEP = 0.10
+UPGRADE_COST_MULT = 1.5
+COMBO_SIZE = 3
+COMBO_BONUS = 500
+CIPHER_BONUS = 250
+CIPHER_WORDS = ["GRAD", "MINE", "LUNE", "ETOILE", "BLOC", "CRYPTO", "BOURSE", "ROCHE"]
+MORSE = {
+    "A": ".-", "B": "-...", "C": "-.-.", "D": "-..", "E": ".", "F": "..-.", "G": "--.",
+    "H": "....", "I": "..", "J": ".---", "K": "-.-", "L": ".-..", "M": "--", "N": "-.",
+    "O": "---", "P": ".--.", "Q": "--.-", "R": ".-.", "S": "...", "T": "-", "U": "..-",
+    "V": "...-", "W": ".--", "X": "-..-", "Y": "-.--", "Z": "--..",
+}
+STREAK_STEP = 10             # bonus de connexion: 10 GRAD x jours consecutifs
+STREAK_CAP = 150
+FRIEND_TIERS = [(5, 2000), (10, 5000), (25, 15000)]
+DAY_S = 86400
+
 WEBHOOK_SECRET = hashlib.sha256(("minex-webhook:" + BOT_TOKEN).encode()).hexdigest()[:48]
 BOT_USERNAME = ""  # rempli au demarrage via get_me()
 
@@ -98,6 +127,18 @@ CREATE TABLE IF NOT EXISTS user_tasks (
 );
 CREATE INDEX IF NOT EXISTS idx_users_balance ON users(balance DESC);
 CREATE INDEX IF NOT EXISTS idx_users_ref ON users(referred_by);
+CREATE TABLE IF NOT EXISTS user_upgrades (
+    user_id INTEGER NOT NULL,
+    upgrade_id TEXT NOT NULL,
+    level INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, upgrade_id)
+);
+CREATE TABLE IF NOT EXISTS user_daily_claims (
+    user_id INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    day INTEGER NOT NULL,
+    PRIMARY KEY (user_id, kind, day)
+);
 """
 
 
@@ -123,6 +164,13 @@ def migrate(conn: sqlite3.Connection) -> None:
         # Calendrier Daily Rewards : dernier claim (epoch) et jour courant (1 a 7)
         conn.execute("ALTER TABLE users ADD COLUMN daily_last_claim REAL NOT NULL DEFAULT 0")
         conn.execute("ALTER TABLE users ADD COLUMN daily_day INTEGER NOT NULL DEFAULT 0")
+    if "streak_days" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN streak_days INTEGER NOT NULL DEFAULT 0")
+    if "streak_last_day" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN streak_last_day INTEGER NOT NULL DEFAULT -1")
+    if "cycle_mult" not in cols:
+        # multiplicateur de taux fige au debut du cycle en cours
+        conn.execute("ALTER TABLE users ADD COLUMN cycle_mult REAL NOT NULL DEFAULT 1.0")
     conn.commit()
 
 
@@ -142,21 +190,21 @@ def db_get_user(uid: int):
     return DB.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
 
 
-def cycle_accrued(last_mine_at, now: float) -> int:
-    """GRAD total du cycle en cours a l'instant now: floor(1000 * temps ecoule / 24 h), plafonne a 1000."""
+def cycle_accrued(last_mine_at, now: float, mult: float = 1.0) -> int:
+    """GRAD du cycle en cours: floor(1000 * mult * temps ecoule / 24 h), plafonne a 1000 * mult."""
     if last_mine_at is None:
         return 0
     elapsed = min(max(now - last_mine_at, 0.0), MINE_COOLDOWN)
-    return math.floor(MINE_REWARD * elapsed / MINE_COOLDOWN)
+    return math.floor(MINE_REWARD * (mult or 1.0) * elapsed / MINE_COOLDOWN + 1e-9)
 
 
 def settle_user(uid: int) -> None:
     """Verse au solde le GRAD accumule depuis la derniere lecture (sans jamais crediter deux fois)."""
     now = time.time()
-    row = DB.execute("SELECT last_mine_at, mine_credited FROM users WHERE id = ?", (uid,)).fetchone()
+    row = DB.execute("SELECT last_mine_at, mine_credited, cycle_mult FROM users WHERE id = ?", (uid,)).fetchone()
     if not row or row["last_mine_at"] is None:
         return
-    acc = cycle_accrued(row["last_mine_at"], now)
+    acc = cycle_accrued(row["last_mine_at"], now, row["cycle_mult"])
     if acc <= row["mine_credited"]:
         return
     # CAS: ne met a jour que si personne n'a deja credite cette tranche
@@ -169,9 +217,7 @@ def settle_user(uid: int) -> None:
 
 def settle_all() -> None:
     """Met a jour tous les cycles en cours (utile avant le classement)."""
-    rows = DB.execute(
-        "SELECT id FROM users WHERE last_mine_at IS NOT NULL AND mine_credited < ?", (MINE_REWARD,)
-    ).fetchall()
+    rows = DB.execute("SELECT id FROM users WHERE last_mine_at IS NOT NULL").fetchall()
     for r in rows:
         settle_user(r["id"])
 
@@ -290,6 +336,249 @@ def daily_state(row, now: float) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# GRADE+ : ligues, ameliorations, combo, cipher, streak, paliers d'amis
+# Tout est calcule et verifie cote serveur. Le client n'affiche que ces valeurs.
+# ---------------------------------------------------------------------------
+def day_index(now: float) -> int:
+    """Jour courant (UTC), sert de seed deterministe cote serveur."""
+    return int(now // DAY_S)
+
+
+def league_of(balance: int) -> dict:
+    idx = 0
+    for i, (threshold, _) in enumerate(LEAGUES):
+        if balance >= threshold:
+            idx = i
+    name = LEAGUES[idx][1]
+    nxt = LEAGUES[idx + 1] if idx + 1 < len(LEAGUES) else None
+    return {
+        "index": idx,
+        "name": name,
+        "next_name": nxt[1] if nxt else "",
+        "next_at": nxt[0] if nxt else 0,
+        "floor": LEAGUES[idx][0],
+    }
+
+
+def upgrade_levels(uid: int) -> dict:
+    rows = DB.execute("SELECT upgrade_id, level FROM user_upgrades WHERE user_id = ?", (uid,)).fetchall()
+    return {r["upgrade_id"]: r["level"] for r in rows}
+
+
+def upgrade_mult(uid: int) -> float:
+    """Multiplicateur du taux: +10 % par niveau cumule sur toutes les ameliorations."""
+    total = sum(upgrade_levels(uid).values())
+    return round(1.0 + UPGRADE_STEP * total, 4)
+
+
+def upgrade_price(base: int, level: int) -> int:
+    return int(math.floor(base * (UPGRADE_COST_MULT ** level)))
+
+
+def combo_for_day(day: int) -> list:
+    import random
+    return random.Random(f"combo-{day}").sample([u["id"] for u in UPGRADES], COMBO_SIZE)
+
+
+def cipher_for_day(day: int) -> str:
+    import random
+    return random.Random(f"cipher-{day}").choice(CIPHER_WORDS)
+
+
+def morse_encode(word: str) -> str:
+    return " / ".join(" ".join(MORSE[c] for c in ch) for ch in word)
+
+
+def claimed_today(uid: int, kind: str, day: int) -> bool:
+    return DB.execute(
+        "SELECT 1 FROM user_daily_claims WHERE user_id = ? AND kind = ? AND day = ?", (uid, kind, day)
+    ).fetchone() is not None
+
+
+def bought_today(uid: int, day: int) -> set:
+    rows = DB.execute(
+        "SELECT kind FROM user_daily_claims WHERE user_id = ? AND day = ? AND kind LIKE 'buy:%'", (uid, day)
+    ).fetchall()
+    return {r["kind"][4:] for r in rows}
+
+
+def streak_bonus(days: int) -> int:
+    return min(STREAK_STEP * days, STREAK_CAP)
+
+
+def update_streak(uid: int, now: float) -> int:
+    """Met a jour la serie de connexions (1 fois par jour) et credite le bonus du jour. Retourne le gain."""
+    today = day_index(now)
+    row = db_get_user(uid)
+    last = int(row["streak_last_day"] if row["streak_last_day"] is not None else -1)
+    if last == today:
+        return 0
+    days = (int(row["streak_days"] or 0) + 1) if last == today - 1 else 1
+    bonus = streak_bonus(days)
+    cur = DB.execute(
+        "UPDATE users SET streak_days = ?, streak_last_day = ?, balance = balance + ?"
+        " WHERE id = ? AND (streak_last_day IS NULL OR streak_last_day < ?)",
+        (days, today, bonus, uid, today),
+    )
+    DB.commit()
+    return bonus if cur.rowcount == 1 else 0
+
+
+def extras_state(uid: int, row, refs: int, claimed: set, now: float) -> dict:
+    today = day_index(now)
+    levels = upgrade_levels(uid)
+    bal = row["balance"]
+    lg = league_of(bal)
+    ups = []
+    for u in UPGRADES:
+        lvl = levels.get(u["id"], 0)
+        ups.append({
+            "id": u["id"], "title": u["title"], "level": lvl,
+            "price": upgrade_price(u["base"], lvl),
+            "affordable": bal >= upgrade_price(u["base"], lvl),
+        })
+    combo_ids = combo_for_day(today)
+    bought = bought_today(uid, today)
+    combo_done_by_user = claimed_today(uid, "combo", today)
+    combo_ready = all(i in bought for i in combo_ids)
+    names = {u["id"]: u["title"] for u in UPGRADES}
+    cipher_word_done = claimed_today(uid, "cipher", today)
+    tiers = []
+    for goal, reward in FRIEND_TIERS:
+        tid = f"friend_{goal}"
+        tiers.append({
+            "id": tid, "goal": goal, "reward": reward,
+            "progress": min(refs, goal),
+            "done": refs >= goal, "claimed": tid in claimed,
+        })
+    streak = int(row["streak_days"] or 0)
+    return {
+        "league": lg,
+        "upgrades": ups,
+        "mult": upgrade_mult(uid),
+        "hourly_base": round(MINE_REWARD / 24, 2),
+        "hourly_rate": round(MINE_REWARD / 24 * upgrade_mult(uid), 2),
+        "combo": {
+            "ids": combo_ids,
+            "titles": [names[i] for i in combo_ids],
+            "bought": [i in bought for i in combo_ids],
+            "ready": combo_ready,
+            "claimed": combo_done_by_user,
+            "bonus": COMBO_BONUS,
+        },
+        "cipher": {
+            "morse": morse_encode(cipher_for_day(today)),
+            "claimed": cipher_word_done,
+            "bonus": CIPHER_BONUS,
+        },
+        "streak": {
+            "days": streak,
+            "next_bonus": streak_bonus(streak + 1 if int(row["streak_last_day"] or -1) != today else streak),
+            "today_done": int(row["streak_last_day"] or -1) == today,
+        },
+        "friend_tiers": tiers,
+    }
+
+
+async def act_upgrade_buy(uid, body, request):
+    """Achete un niveau d'amelioration. Prix verifie et debite dans une seule requete SQL."""
+    uid_up = str(body.get("upgrade_id", ""))
+    up = UPGRADE_BY_ID.get(uid_up)
+    if not up:
+        raise ApiError("Amélioration inconnue.")
+    settle_user(uid)
+    now = time.time()
+    level = upgrade_levels(uid).get(uid_up, 0)
+    price = upgrade_price(up["base"], level)
+    cur = DB.execute(
+        "UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?", (price, uid, price)
+    )
+    if cur.rowcount != 1:
+        DB.rollback()
+        raise ApiError(f"Pas assez de GRAD : il faut {price} {CURRENCY}.")
+    DB.execute(
+        "INSERT INTO user_upgrades (user_id, upgrade_id, level) VALUES (?, ?, 1)"
+        " ON CONFLICT(user_id, upgrade_id) DO UPDATE SET level = level + 1",
+        (uid, uid_up),
+    )
+    DB.execute(
+        "INSERT OR IGNORE INTO user_daily_claims (user_id, kind, day) VALUES (?, ?, ?)",
+        (uid, "buy:" + uid_up, day_index(now)),
+    )
+    DB.commit()
+    return {"ok": True, "message": f"{up['title']} niveau {level + 1} acheté pour {price} {CURRENCY}. "
+            "Le taux augmente au prochain minage.", **build_state(uid)}
+
+
+async def act_combo_claim(uid, body, request):
+    """Combo du jour: les 3 cartes achetees le meme jour, +500 GRAD, une seule fois par jour."""
+    now = time.time()
+    today = day_index(now)
+    if claimed_today(uid, "combo", today):
+        raise ApiError("Combo déjà réclamé aujourd'hui.")
+    ids = combo_for_day(today)
+    bought = bought_today(uid, today)
+    if not all(i in bought for i in ids):
+        raise ApiError("Achète les 3 cartes du combo aujourd'hui pour le réclamer.")
+    settle_user(uid)
+    cur = DB.execute(
+        "INSERT OR IGNORE INTO user_daily_claims (user_id, kind, day) VALUES (?, 'combo', ?)", (uid, today)
+    )
+    if cur.rowcount != 1:
+        DB.rollback()
+        raise ApiError("Combo déjà réclamé aujourd'hui.")
+    DB.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (COMBO_BONUS, uid))
+    DB.commit()
+    return {"ok": True, "gained": COMBO_BONUS, "message": f"Combo réussi : +{COMBO_BONUS} {CURRENCY} !",
+            **build_state(uid)}
+
+
+async def act_cipher_claim(uid, body, request):
+    """Cipher du jour: decoder le morse, +250 GRAD, une fois par jour, verifie cote serveur."""
+    now = time.time()
+    today = day_index(now)
+    if claimed_today(uid, "cipher", today):
+        raise ApiError("Cipher déjà réussi aujourd'hui.")
+    answer = str(body.get("answer", "")).strip().upper()
+    if answer != cipher_for_day(today):
+        raise ApiError("Mauvais code. Essaie encore.")
+    settle_user(uid)
+    cur = DB.execute(
+        "INSERT OR IGNORE INTO user_daily_claims (user_id, kind, day) VALUES (?, 'cipher', ?)", (uid, today)
+    )
+    if cur.rowcount != 1:
+        DB.rollback()
+        raise ApiError("Cipher déjà réussi aujourd'hui.")
+    DB.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (CIPHER_BONUS, uid))
+    DB.commit()
+    return {"ok": True, "gained": CIPHER_BONUS, "message": f"Cipher décodé : +{CIPHER_BONUS} {CURRENCY} !",
+            **build_state(uid)}
+
+
+async def act_friend_tier_claim(uid, body, request):
+    """Palier d'amis: 5 amis = +2000, etc. Reclame une seule fois, verifie le nombre d'amis cote serveur."""
+    tid = str(body.get("tier_id", ""))
+    tier = next((t for t in FRIEND_TIERS if f"friend_{t[0]}" == tid), None)
+    if not tier:
+        raise ApiError("Palier inconnu.")
+    goal, reward = tier
+    if db_count_referrals(uid) < goal:
+        raise ApiError(f"Il te faut {goal} amis invités pour ce palier.")
+    settle_user(uid)
+    cur = DB.execute(
+        "INSERT OR IGNORE INTO user_tasks (user_id, task_id, claimed_at) VALUES (?, ?, ?)",
+        (uid, tid, time.time()),
+    )
+    if cur.rowcount != 1:
+        DB.rollback()
+        raise ApiError("Palier déjà réclamé.")
+    DB.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (reward, uid))
+    DB.commit()
+    return {"ok": True, "gained": reward, "message": f"Palier {goal} amis : +{reward} {CURRENCY} !",
+            **build_state(uid)}
+
+
 def build_state(uid: int) -> dict:
     db_claim_welcome(uid)  # comptes existants: credite une fois (no-op si deja fait)
     settle_user(uid)
@@ -304,7 +593,7 @@ def build_state(uid: int) -> dict:
     can_mine = now >= next_mine_at
     # GRAD du cycle deja credite au solde, et GRAD encore en cours d'accumulation
     cycle_credited = int(row["mine_credited"] or 0) if row["last_mine_at"] else 0
-    cycle_pending = cycle_accrued(row["last_mine_at"], now) if row["last_mine_at"] else 0
+    cycle_pending = cycle_accrued(row["last_mine_at"], now, row["cycle_mult"]) if row["last_mine_at"] else 0
 
     me = {
         "id": uid,
@@ -355,6 +644,8 @@ def build_state(uid: int) -> dict:
             "link": CHANNEL_LINK if t["kind"] == "channel" else "",
         })
 
+    extra = extras_state(uid, row, refs, claimed, now)
+    me.update(extra)
     return {"me": me, "tasks": tasks}
 
 
@@ -394,6 +685,10 @@ class ApiError(Exception):
 
 
 async def act_me(uid, body, request):
+    gain = update_streak(uid, time.time())
+    if gain:
+        return {"ok": True, "gained": gain, "message": f"Connexion 🔥 : +{gain} {CURRENCY}",
+                **build_state(uid)}
     return {"ok": True, **build_state(uid)}
 
 
@@ -404,9 +699,9 @@ async def act_mine(uid, body, request):
     settle_user(uid)  # solde le cycle precedent (plein) avant d'en commencer un nouveau
     now = time.time()
     cur = DB.execute(
-        "UPDATE users SET mines_count = mines_count + 1, last_mine_at = ?, mine_credited = 0"
+        "UPDATE users SET mines_count = mines_count + 1, last_mine_at = ?, mine_credited = 0, cycle_mult = ?"
         " WHERE id = ? AND (last_mine_at IS NULL OR last_mine_at <= ?)",
-        (now, uid, now - MINE_COOLDOWN),
+        (now, upgrade_mult(uid), uid, now - MINE_COOLDOWN),
     )
     DB.commit()
     if cur.rowcount != 1:
@@ -579,6 +874,10 @@ ACTIONS = {
     "settings_notifications": act_settings_notifications,
     "settings_lang": act_settings_lang,
     "settings_reset": act_settings_reset,
+    "upgrade_buy": act_upgrade_buy,
+    "combo_claim": act_combo_claim,
+    "cipher_claim": act_cipher_claim,
+    "friend_tier_claim": act_friend_tier_claim,
 }
 
 

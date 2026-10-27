@@ -142,6 +142,20 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
 .confirm-box{margin-top:10px;padding:10px;border:1px solid #ff6b6b;border-radius:12px}
 .row-btn{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.league-badge{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(245,197,66,.15);color:var(--gold);font-size:12px;font-weight:700;margin-left:6px}
+.streak{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(255,120,40,.15);color:#ffb070;font-size:12px;font-weight:700;margin-left:6px}
+.gp{margin-bottom:12px}
+.gp-title{font-weight:700;margin-top:10px;color:var(--txt)}
+.gp-sub{font-size:12px;color:var(--mut);margin:2px 0 6px}
+.gp-rate{font-size:13px;color:var(--gold);margin-bottom:6px}
+.gp-row{display:flex;gap:8px}
+.gp-row input{flex:1;background:#0c0f1e;border:1px solid #1d2442;color:var(--txt);border-radius:8px;padding:8px}
+.up-card{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1d2442}
+.up-card small{color:var(--mut)}
+.gp-chip{display:inline-block;margin-right:4px;padding:2px 6px;border-radius:6px;background:#0c0f1e;font-size:12px;color:var(--mut)}
+.gp-chip.ok{color:var(--gold)}
+.toast-up{position:absolute;left:50%;transform:translateX(-50%);color:var(--gold);font-weight:800;font-size:18px;pointer-events:none;animation:upRise 1.3s ease-out forwards;text-shadow:0 0 8px rgba(245,197,66,.6)}
+@keyframes upRise{0%{opacity:0;transform:translate(-50%,0)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,-70px)}}
 </style>
 <body>
 
@@ -185,7 +199,7 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
     <div class="balance">
       <div class="bal-lbl" data-i18n="balance_label">Ton solde</div>
       <div class="bal-big"><span id="balMain">0</span></div>
-      <div class="bal-unit">GRAD</div>
+      <div class="bal-unit">GRAD <span class="league-badge" id="leagueBadge"></span> <span class="streak" id="streakTxt"></span></div>
     </div>
 
     <div class="mine-row">
@@ -233,6 +247,20 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
 
   <!-- TACHES -->
   <section class="screen" id="s-tasks">
+    <div class="card gp" id="gpBox">
+      <div class="gp-title" data-i18n="gp_upgrades">Améliorations</div>
+      <div class="gp-sub" data-i18n="gp_upgrades_sub">Multiplie ton taux horaire (+10 % par niveau)</div>
+      <div class="gp-rate" id="gpRate"></div>
+      <div id="upgradeList"></div>
+      <div class="gp-title" data-i18n="gp_combo">Combo du jour</div>
+      <div class="gp-sub" data-i18n="gp_combo_sub">Achète les 3 cartes aujourd'hui pour +500 GRAD</div>
+      <div id="comboBox"></div>
+      <div class="gp-title" data-i18n="gp_cipher">Cipher du jour</div>
+      <div class="gp-sub" id="cipherHint"></div>
+      <div class="gp-row"><input id="cipherInput" maxlength="12" autocomplete="off" placeholder="?"><button class="btn sm" id="cipherBtn" data-i18n="gp_cipher_btn">Valider</button></div>
+      <div class="gp-title" data-i18n="gp_friend_tiers">Paliers d'amis</div>
+      <div id="friendTiers"></div>
+    </div>
     <h2 class="title"><em data-i18n="tab_tasks" style="font-style:normal">Tâches</em> <span>✅</span></h2>
     <p class="muted" data-i18n="tasks_desc">Termine les tâches pour gagner des GRAD bonus. Chaque tâche se réclame une seule fois.</p>
     <div id="taskList"><div class="loading">Chargement...</div></div>
@@ -500,9 +528,9 @@ const LANG_NAMES = {
   ceb: "\ud83c\uddf5\ud83c\udded Cebuano"
 };
 const I18N = {
-  fr: { balance_label: "Ton solde", per_mine: "Gain par minage", per_hour: "un minage par heure", rank: "Rang", mines: "Minages", friends: "Amis", tasks_desc: "Termine les tâches pour gagner des GRAD bonus. Chaque tâche se réclame une seule fois.", tab_tasks: "Tâches", tab_mine: "Miner", ref_label: "Ton lien de parrainage", copy: "Copier", share: "Partager", gains_ref: "Gains parrainage", your_refs: "Tes filleuls", tab_wallet: "Portefeuille", wallet_desc: "Ton solde en GRAD et l'adresse où tu veux recevoir tes gains. Les retraits seront disponibles plus tard.", balance_avail: "Solde disponible", addr_now: "Adresse actuelle", wallet_ph: "Colle ton adresse de portefeuille", wallet_ph2: "Colle ou modifie ton adresse", save_addr: "Enregistrer l'adresse", wallet_hint: "Ajouter ton portefeuille te rapporte aussi 200 GRAD via la tâche correspondante.", tab_profile: "Profil", balance_kv: "Solde", mines_done: "Minages effectués", referred: "Amis parrainés", member_since: "Membre depuis", leaderboard: "Classement", settings: "Réglages du compte", display_name: "Pseudo affiché", name_ph: "Ton pseudo (24 caractères max)", save_name: "Enregistrer le pseudo", prefs: "Préférences", language: "Langue", language_desc: "Langue de l'interface", notifications: "Notifications", notif_desc: "Rappels quand ton minage est prêt", danger: "Zone de danger", reset_btn: "Réinitialiser mon compte", reset_confirm: "Action définitive : ton solde GRAD et tes minages repartent à zéro. Confirmer ?", cancel: "Annuler", reset_yes: "Oui, réinitialiser", busy: "Minage...", btn_mine: "Miner", in_progress: "Minage en cours...", ready: "Prêt à miner : +{n} {cur}", next_in: "Prochain minage dans {t}", claimed: "Réclamée", open: "Ouvrir", claim: "Réclamer", no_refs: "Aucun filleul pour le moment. Partage ton lien !", share_text: "Rejoins-moi sur GRADE et gagne des GRAD avec moi !", no_addr: "Aucune adresse enregistrée", lang_saved: "Langue enregistrée", invite_desc: "Invite tes amis avec ton lien. Tu gagnes {b} GRAD pour chaque ami inscrit, et ton ami reçoit {w} GRAD." },
-  en: { balance_label: "Your balance", per_mine: "Reward per mine", per_hour: "one mine per hour", rank: "Rank", mines: "Mines", friends: "Friends", tasks_desc: "Complete tasks to earn bonus GRAD. Each task can be claimed once.", tab_tasks: "Tasks", tab_mine: "Mine", ref_label: "Your referral link", copy: "Copy", share: "Share", gains_ref: "Referral earnings", your_refs: "Your referrals", tab_wallet: "Wallet", wallet_desc: "Your GRAD balance and the address where you want to receive your earnings. Withdrawals will come later.", balance_avail: "Available balance", addr_now: "Current address", wallet_ph: "Paste your wallet address", wallet_ph2: "Paste or edit your address", save_addr: "Save address", wallet_hint: "Adding your wallet also earns you 200 GRAD through the matching task.", tab_profile: "Profile", balance_kv: "Balance", mines_done: "Mines done", referred: "Referred friends", member_since: "Member since", leaderboard: "Leaderboard", settings: "Account settings", display_name: "Display name", name_ph: "Your name (24 characters max)", save_name: "Save name", prefs: "Preferences", language: "Language", language_desc: "Interface language", notifications: "Notifications", notif_desc: "Reminders when your mine is ready", danger: "Danger zone", reset_btn: "Reset my account", reset_confirm: "This is permanent: your GRAD balance and mines go back to zero. Confirm?", cancel: "Cancel", reset_yes: "Yes, reset", busy: "Mining...", btn_mine: "Mine", in_progress: "Mining in progress...", ready: "Ready to mine: +{n} {cur}", next_in: "Next mine in {t}", claimed: "Claimed", open: "Open", claim: "Claim", no_refs: "No referrals yet. Share your link!", share_text: "Join me on GRADE and earn GRAD together!", no_addr: "No address saved", lang_saved: "Language saved", invite_desc: "Invite friends with your link. You earn {b} GRAD for each friend who signs up, and your friend gets {w} GRAD." },
-  es: { balance_label: "Tu saldo", per_mine: "Ganancia por minado", per_hour: "un minado por hora", rank: "Puesto", mines: "Minados", friends: "Amigos", tasks_desc: "Completa tareas para ganar GRAD extra. Cada tarea se reclama una sola vez.", tab_tasks: "Tareas", tab_mine: "Minar", ref_label: "Tu enlace de referido", copy: "Copiar", share: "Compartir", gains_ref: "Ganancias por referidos", your_refs: "Tus referidos", tab_wallet: "Billetera", wallet_desc: "Tu saldo en GRAD y la dirección donde quieres recibir tus ganancias. Los retiros llegarán más adelante.", balance_avail: "Saldo disponible", addr_now: "Dirección actual", wallet_ph: "Pega tu dirección de billetera", wallet_ph2: "Pega o edita tu dirección", save_addr: "Guardar dirección", wallet_hint: "Añadir tu billetera también te da 200 GRAD con la tarea correspondiente.", tab_profile: "Perfil", balance_kv: "Saldo", mines_done: "Minados realizados", referred: "Amigos referidos", member_since: "Miembro desde", leaderboard: "Clasificación", settings: "Ajustes de la cuenta", display_name: "Nombre visible", name_ph: "Tu nombre (máx. 24 caracteres)", save_name: "Guardar nombre", prefs: "Preferencias", language: "Idioma", language_desc: "Idioma de la interfaz", notifications: "Notificaciones", notif_desc: "Recordatorios cuando tu minado esté listo", danger: "Zona de peligro", reset_btn: "Reiniciar mi cuenta", reset_confirm: "Es definitivo: tu saldo GRAD y tus minados volverán a cero. ¿Confirmar?", cancel: "Cancelar", reset_yes: "Sí, reiniciar", busy: "Minando...", btn_mine: "Minar", in_progress: "Minado en curso...", ready: "Listo para minar: +{n} {cur}", next_in: "Próximo minado en {t}", claimed: "Reclamada", open: "Abrir", claim: "Reclamar", no_refs: "Aún no tienes referidos. ¡Comparte tu enlace!", share_text: "¡Únete a GRADE conmigo y gana GRAD juntos!", no_addr: "Ninguna dirección guardada", lang_saved: "Idioma guardado", invite_desc: "Invita a tus amigos con tu enlace. Ganas {b} GRAD por cada amigo que se registre, y tu amigo recibe {w} GRAD." },
+  fr: { gp_upgrades: "Améliorations", gp_upgrades_sub: "Multiplie ton taux horaire (+10 % par niveau)", gp_combo: "Combo du jour", gp_combo_sub: "Achète les 3 cartes aujourd'hui pour +500 GRAD", gp_cipher: "Cipher du jour", gp_cipher_btn: "Valider", gp_friend_tiers: "Paliers d'amis", balance_label: "Ton solde", per_mine: "Gain par minage", per_hour: "un minage par heure", rank: "Rang", mines: "Minages", friends: "Amis", tasks_desc: "Termine les tâches pour gagner des GRAD bonus. Chaque tâche se réclame une seule fois.", tab_tasks: "Tâches", tab_mine: "Miner", ref_label: "Ton lien de parrainage", copy: "Copier", share: "Partager", gains_ref: "Gains parrainage", your_refs: "Tes filleuls", tab_wallet: "Portefeuille", wallet_desc: "Ton solde en GRAD et l'adresse où tu veux recevoir tes gains. Les retraits seront disponibles plus tard.", balance_avail: "Solde disponible", addr_now: "Adresse actuelle", wallet_ph: "Colle ton adresse de portefeuille", wallet_ph2: "Colle ou modifie ton adresse", save_addr: "Enregistrer l'adresse", wallet_hint: "Ajouter ton portefeuille te rapporte aussi 200 GRAD via la tâche correspondante.", tab_profile: "Profil", balance_kv: "Solde", mines_done: "Minages effectués", referred: "Amis parrainés", member_since: "Membre depuis", leaderboard: "Classement", settings: "Réglages du compte", display_name: "Pseudo affiché", name_ph: "Ton pseudo (24 caractères max)", save_name: "Enregistrer le pseudo", prefs: "Préférences", language: "Langue", language_desc: "Langue de l'interface", notifications: "Notifications", notif_desc: "Rappels quand ton minage est prêt", danger: "Zone de danger", reset_btn: "Réinitialiser mon compte", reset_confirm: "Action définitive : ton solde GRAD et tes minages repartent à zéro. Confirmer ?", cancel: "Annuler", reset_yes: "Oui, réinitialiser", busy: "Minage...", btn_mine: "Miner", in_progress: "Minage en cours...", ready: "Prêt à miner : +{n} {cur}", next_in: "Prochain minage dans {t}", claimed: "Réclamée", open: "Ouvrir", claim: "Réclamer", no_refs: "Aucun filleul pour le moment. Partage ton lien !", share_text: "Rejoins-moi sur GRADE et gagne des GRAD avec moi !", no_addr: "Aucune adresse enregistrée", lang_saved: "Langue enregistrée", invite_desc: "Invite tes amis avec ton lien. Tu gagnes {b} GRAD pour chaque ami inscrit, et ton ami reçoit {w} GRAD." },
+  en: { gp_upgrades: "Upgrades", gp_upgrades_sub: "Boost your hourly rate (+10% per level)", gp_combo: "Daily combo", gp_combo_sub: "Buy the 3 cards today for +500 GRAD", gp_cipher: "Daily cipher", gp_cipher_btn: "Submit", gp_friend_tiers: "Friend tiers", balance_label: "Your balance", per_mine: "Reward per mine", per_hour: "one mine per hour", rank: "Rank", mines: "Mines", friends: "Friends", tasks_desc: "Complete tasks to earn bonus GRAD. Each task can be claimed once.", tab_tasks: "Tasks", tab_mine: "Mine", ref_label: "Your referral link", copy: "Copy", share: "Share", gains_ref: "Referral earnings", your_refs: "Your referrals", tab_wallet: "Wallet", wallet_desc: "Your GRAD balance and the address where you want to receive your earnings. Withdrawals will come later.", balance_avail: "Available balance", addr_now: "Current address", wallet_ph: "Paste your wallet address", wallet_ph2: "Paste or edit your address", save_addr: "Save address", wallet_hint: "Adding your wallet also earns you 200 GRAD through the matching task.", tab_profile: "Profile", balance_kv: "Balance", mines_done: "Mines done", referred: "Referred friends", member_since: "Member since", leaderboard: "Leaderboard", settings: "Account settings", display_name: "Display name", name_ph: "Your name (24 characters max)", save_name: "Save name", prefs: "Preferences", language: "Language", language_desc: "Interface language", notifications: "Notifications", notif_desc: "Reminders when your mine is ready", danger: "Danger zone", reset_btn: "Reset my account", reset_confirm: "This is permanent: your GRAD balance and mines go back to zero. Confirm?", cancel: "Cancel", reset_yes: "Yes, reset", busy: "Mining...", btn_mine: "Mine", in_progress: "Mining in progress...", ready: "Ready to mine: +{n} {cur}", next_in: "Next mine in {t}", claimed: "Claimed", open: "Open", claim: "Claim", no_refs: "No referrals yet. Share your link!", share_text: "Join me on GRADE and earn GRAD together!", no_addr: "No address saved", lang_saved: "Language saved", invite_desc: "Invite friends with your link. You earn {b} GRAD for each friend who signs up, and your friend gets {w} GRAD." },
+  es: { gp_upgrades: "Mejoras", gp_upgrades_sub: "Multiplica tu ritmo por hora (+10 % por nivel)", gp_combo: "Combo diario", gp_combo_sub: "Compra las 3 cartas hoy para +500 GRAD", gp_cipher: "Cifrado diario", gp_cipher_btn: "Validar", gp_friend_tiers: "Niveles de amigos", balance_label: "Tu saldo", per_mine: "Ganancia por minado", per_hour: "un minado por hora", rank: "Puesto", mines: "Minados", friends: "Amigos", tasks_desc: "Completa tareas para ganar GRAD extra. Cada tarea se reclama una sola vez.", tab_tasks: "Tareas", tab_mine: "Minar", ref_label: "Tu enlace de referido", copy: "Copiar", share: "Compartir", gains_ref: "Ganancias por referidos", your_refs: "Tus referidos", tab_wallet: "Billetera", wallet_desc: "Tu saldo en GRAD y la dirección donde quieres recibir tus ganancias. Los retiros llegarán más adelante.", balance_avail: "Saldo disponible", addr_now: "Dirección actual", wallet_ph: "Pega tu dirección de billetera", wallet_ph2: "Pega o edita tu dirección", save_addr: "Guardar dirección", wallet_hint: "Añadir tu billetera también te da 200 GRAD con la tarea correspondiente.", tab_profile: "Perfil", balance_kv: "Saldo", mines_done: "Minados realizados", referred: "Amigos referidos", member_since: "Miembro desde", leaderboard: "Clasificación", settings: "Ajustes de la cuenta", display_name: "Nombre visible", name_ph: "Tu nombre (máx. 24 caracteres)", save_name: "Guardar nombre", prefs: "Preferencias", language: "Idioma", language_desc: "Idioma de la interfaz", notifications: "Notificaciones", notif_desc: "Recordatorios cuando tu minado esté listo", danger: "Zona de peligro", reset_btn: "Reiniciar mi cuenta", reset_confirm: "Es definitivo: tu saldo GRAD y tus minados volverán a cero. ¿Confirmar?", cancel: "Cancelar", reset_yes: "Sí, reiniciar", busy: "Minando...", btn_mine: "Minar", in_progress: "Minado en curso...", ready: "Listo para minar: +{n} {cur}", next_in: "Próximo minado en {t}", claimed: "Reclamada", open: "Abrir", claim: "Reclamar", no_refs: "Aún no tienes referidos. ¡Comparte tu enlace!", share_text: "¡Únete a GRADE conmigo y gana GRAD juntos!", no_addr: "Ninguna dirección guardada", lang_saved: "Idioma guardado", invite_desc: "Invita a tus amigos con tu enlace. Ganas {b} GRAD por cada amigo que se registre, y tu amigo recibe {w} GRAD." },
   pt: { balance_label: "Seu saldo", per_mine: "Ganho por mineração", per_hour: "uma mineração por hora", rank: "Posição", mines: "Mineração", friends: "Amigos", tasks_desc: "Complete tarefas para ganhar GRAD bônus. Cada tarefa pode ser resgatada uma vez.", tab_tasks: "Tarefas", tab_mine: "Minerar", ref_label: "Seu link de indicação", copy: "Copiar", share: "Compartilhar", gains_ref: "Ganhos de indicação", your_refs: "Suas indicações", tab_wallet: "Carteira", wallet_desc: "Seu saldo em GRAD e o endereço onde quer receber seus ganhos. Os saques estarão disponíveis depois.", balance_avail: "Saldo disponível", addr_now: "Endereço atual", wallet_ph: "Cole o endereço da carteira", wallet_ph2: "Cole ou edite seu endereço", save_addr: "Salvar endereço", wallet_hint: "Adicionar sua carteira também rende 200 GRAD pela tarefa correspondente.", tab_profile: "Perfil", balance_kv: "Saldo", mines_done: "Minerações feitas", referred: "Amigos indicados", member_since: "Membro desde", leaderboard: "Classificação", settings: "Configurações da conta", display_name: "Nome exibido", name_ph: "Seu nome (máx. 24 caracteres)", save_name: "Salvar nome", prefs: "Preferências", language: "Idioma", language_desc: "Idioma da interface", notifications: "Notificações", notif_desc: "Lembretes quando sua mineração estiver pronta", danger: "Zona de perigo", reset_btn: "Redefinir minha conta", reset_confirm: "Isto é definitivo: seu saldo GRAD e suas mineradas voltam a zero. Confirmar?", cancel: "Cancelar", reset_yes: "Sim, redefinir", busy: "Minerando...", btn_mine: "Minerar", in_progress: "Mineração em andamento...", ready: "Pronto para minerar: +{n} {cur}", next_in: "Próxima mineração em {t}", claimed: "Resgatada", open: "Abrir", claim: "Resgatar", no_refs: "Nenhuma indicação ainda. Compartilhe seu link!", share_text: "Entre no GRADE comigo e ganhe GRAD junto!", no_addr: "Nenhum endereço salvo", lang_saved: "Idioma salvo", invite_desc: "Convide amigos com seu link. Você ganha {b} GRAD por cada amigo que se cadastrar, e seu amigo ganha {w} GRAD." },
   ar: { balance_label: "رصيدك", per_mine: "المكافأة لكل تعدين", per_hour: "تعدين واحد في الساعة", rank: "الترتيب", mines: "التعدين", friends: "الأصدقاء", tasks_desc: "أكمل المهام لتربح GRAD إضافية. يمكن استلام كل مهمة مرة واحدة.", tab_tasks: "المهام", tab_mine: "تعدين", ref_label: "رابط الإحالة الخاص بك", copy: "نسخ", share: "مشاركة", gains_ref: "أرباح الإحالة", your_refs: "إحالاتك", tab_wallet: "المحفظة", wallet_desc: "رصيدك بـ GRAD والعنوان الذي تريد استلام أرباحك عليه. ستتوفر عمليات السحب لاحقاً.", balance_avail: "الرصيد المتاح", addr_now: "العنوان الحالي", wallet_ph: "الصق عنوان محفظتك", wallet_ph2: "الصق عنوانك أو عدّله", save_addr: "حفظ العنوان", wallet_hint: "إضافة محفظتك تكسبك أيضاً 200 GRAD عبر المهمة المطابقة.", tab_profile: "الملف", balance_kv: "الرصيد", mines_done: "عمليات التعدين المنجزة", referred: "الأصدقاء المُحالون", member_since: "عضو منذ", leaderboard: "لوحة المتصدرين", settings: "إعدادات الحساب", display_name: "الاسم المعروض", name_ph: "اسمك (24 حرفاً كحد أقصى)", save_name: "حفظ الاسم", prefs: "التفضيلات", language: "اللغة", language_desc: "لغة الواجهة", notifications: "الإشعارات", notif_desc: "تذكيرات عند جاهزية التعدين", danger: "منطقة الخطر", reset_btn: "إعادة تعيين حسابي", reset_confirm: "هذا نهائي: رصيدك GRAD وعمليات التعدين ستعود إلى الصفر. تأكيد؟", cancel: "إلغاء", reset_yes: "نعم، أعد التعيين", busy: "جارٍ التعدين...", btn_mine: "تعدين", in_progress: "التعدين جارٍ...", ready: "جاهز للتعدين: +{n} {cur}", next_in: "التعدين التالي خلال {t}", claimed: "تم الاستلام", open: "فتح", claim: "مطالبة", no_refs: "لا توجد إحالات بعد. شارك رابطك!", share_text: "انضم إليّ في GRADE واربح GRAD معاً!", no_addr: "لا يوجد عنوان محفوظ", lang_saved: "تم حفظ اللغة", invite_desc: "ادعُ أصدقاءك برابطك. تربح {b} GRAD عن كل صديق يسجّل، ويحصل صديقك على {w} GRAD." },
   sw: { balance_label: "Salio lako", per_mine: "Zawadi kwa kila uchimbaji", per_hour: "uchimbaji mmoja kwa saa", rank: "Nafasi", mines: "Uchimbaji", friends: "Marafiki", tasks_desc: "Kamilisha kazi upate GRAD za ziada. Kila kazi inaweza kudaiwa mara moja.", tab_tasks: "Kazi", tab_mine: "Chimba", ref_label: "Kiungo chako cha rufaa", copy: "Nakili", share: "Shiriki", gains_ref: "Mapato ya rufaa", your_refs: "Waliokualikwa wako", tab_wallet: "Pochi", wallet_desc: "Salio lako la GRAD na anwani ambapo unataka kupokea mapato. Kutoa pesa kutapatikana baadaye.", balance_avail: "Salio linalopatikana", addr_now: "Anwani ya sasa", wallet_ph: "Bandika anwani ya pochi yako", wallet_ph2: "Bandika au hariri anwani yako", save_addr: "Hifadhi anwani", wallet_hint: "Kuongeza pochi yako pia kunakupa GRAD 200 kupitia kazi husika.", tab_profile: "Wasifu", balance_kv: "Salio", mines_done: "Uchimbaji uliofanywa", referred: "Marafiki waliokualikwa", member_since: "Mwanachama tangu", leaderboard: "Ubao wa viongozi", settings: "Mipangilio ya akaunti", display_name: "Jina la kuonyesha", name_ph: "Jina lako (herufi 24 kiwango cha juu)", save_name: "Hifadhi jina", prefs: "Mapendeleo", language: "Lugha", language_desc: "Lugha ya kiolesura", notifications: "Arifa", notif_desc: "Vikumbusho mchimbaji wako akiwa tayari", danger: "Eneo hatari", reset_btn: "Weka upya akaunti yangu", reset_confirm: "Hii ni ya kudumu: salio lako la GRAD na uchimbaji vitarudi sifuri. Thibitisha?", cancel: "Ghairi", reset_yes: "Ndiyo, weka upya", busy: "Inachimba...", btn_mine: "Chimba", in_progress: "Uchimbaji unaendelea...", ready: "Tayari kuchimba: +{n} {cur}", next_in: "Uchimbaji ujao baada ya {t}", claimed: "Imedaiwa", open: "Fungua", claim: "Dai", no_refs: "Hakuna rufaa bado. Shiriki kiungo chako!", share_text: "Jiunge nami kwenye GRADE upate GRAD pamoja!", no_addr: "Hakuna anwani iliyohifadhiwa", lang_saved: "Lugha imehifadhiwa", invite_desc: "Alika marafiki kwa kiungo chako. Unapata GRAD {b} kwa kila rafiki anayejisajili, na rafiki yako anapata GRAD {w}." },
@@ -644,6 +672,18 @@ function renderMine() {
   if (S.busy) { st.className = "status wait"; st.textContent = tr("in_progress"); }
   else if (ready) { st.className = "status ok"; st.textContent = tr("ready", { n: fmt(S.reward), cur: S.cur }); }
   else { st.className = "status wait"; st.textContent = tr("next_in", { t: fmtDur(rem) }); }
+}
+
+function spawnGain(amount) {
+  if (!amount) return;
+  const stage = $("#stage");
+  if (!stage) return;
+  const el = document.createElement("div");
+  el.className = "toast-up";
+  el.textContent = "+" + fmt(amount) + " " + (S.cur || "GRAD");
+  el.style.top = "30%";
+  stage.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
 }
 
 function spawnFloat(text) {
@@ -930,7 +970,76 @@ function safeRender(name, fn) {
   try { fn(); }
   catch (e) { console.error("render " + name, e); }
 }
+function renderGradePlus() {
+  if (!S.me) return;
+  const lg = S.me.league, bd = $("#leagueBadge");
+  if (bd && lg) bd.textContent = lg.name;
+  const st = S.me.streak, sx = $("#streakTxt");
+  if (sx && st) sx.textContent = "🔥 " + fmt(st.days) + " j";
+  const rate = $("#gpRate");
+  if (rate && S.me.hourly_rate != null) rate.textContent = fmt(S.me.hourly_rate) + " GRAD / h (x" + S.me.mult.toFixed(2) + ")";
+  const ul = $("#upgradeList");
+  if (ul && S.me.upgrades) {
+    ul.innerHTML = S.me.upgrades.map((u) =>
+      '<div class="up-card"><div><b>' + esc(u.title) + '</b> <small>niv ' + u.level + '</small></div>' +
+      '<button class="btn sm" data-upgrade="' + esc(u.id) + '" ' + (u.affordable ? "" : "disabled") + '>' +
+      fmt(u.price) + ' ' + esc(S.cur) + '</button></div>').join("");
+  }
+  const cb = $("#comboBox");
+  if (cb && S.me.combo) {
+    const c = S.me.combo;
+    const chips = c.titles.map((t, i) => '<span class="gp-chip ' + (c.bought[i] ? "ok" : "") + '">' + (c.bought[i] ? "✓ " : "") + esc(t) + '</span>').join("");
+    let act = c.claimed ? '<span class="done-tag">✓ ' + tr("claimed") + '</span>' :
+      '<button class="btn sm" id="comboBtn" ' + (c.ready ? "" : "disabled") + '>+' + fmt(c.bonus) + ' ' + esc(S.cur) + '</button>';
+    cb.innerHTML = '<div>' + chips + '</div><div style="margin-top:6px">' + act + '</div>';
+  }
+  const cip = $("#cipherHint");
+  if (cip && S.me.cipher) {
+    cip.textContent = S.me.cipher.claimed ? "Cipher réussi aujourd'hui ✓" : "Morse : " + S.me.cipher.morse + " (+" + fmt(S.me.cipher.bonus) + " " + S.cur + ")";
+    const inp = $("#cipherInput"), btn = $("#cipherBtn");
+    if (inp) inp.disabled = S.me.cipher.claimed;
+    if (btn) btn.disabled = S.me.cipher.claimed;
+  }
+  const ft = $("#friendTiers");
+  if (ft && S.me.friend_tiers) {
+    ft.innerHTML = S.me.friend_tiers.map((t) =>
+      '<div class="up-card"><div><b>' + fmt(t.goal) + ' amis</b> <small>' + fmt(t.progress) + '/' + fmt(t.goal) + '</small></div>' +
+      (t.claimed ? '<span class="done-tag">✓</span>' :
+        '<button class="btn sm" data-friend-tier="' + esc(t.id) + '" ' + (t.done ? "" : "disabled") + '>+' + fmt(t.reward) + '</button>') +
+      '</div>').join("");
+  }
+}
+
+// action serveur generique: applique l'etat renvoye et affiche les gains
+async function gpAction(action, payload) {
+  const d = await call(action, payload);
+  if (!d.ok) { toast(d.error || "Erreur.", "bad"); return; }
+  if (d.message) toast(d.message, "good");
+  if (d.gained) spawnGain(d.gained);
+  applyState(d);
+}
+
+function bindGradePlus() {
+  const ul = $("#upgradeList");
+  if (ul) ul.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-upgrade]");
+    if (b && !b.disabled) gpAction("upgrade_buy", { upgrade_id: b.dataset.upgrade });
+  });
+  const ft = $("#friendTiers");
+  if (ft) ft.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-friend-tier]");
+    if (b && !b.disabled) gpAction("friend_tier_claim", { tier_id: b.dataset.friendTier });
+  });
+  const cb = $("#comboBox");
+  if (cb) cb.addEventListener("click", (e) => {
+    if (e.target.closest("#comboBtn")) gpAction("combo_claim", {});
+  });
+  const cp = $("#cipherBtn");
+  if (cp) cp.addEventListener("click", () => gpAction("cipher_claim", { answer: $("#cipherInput").value }));
+}
+
 function renderAll() {
+  safeRender("gp", renderGradePlus);
   safeRender("mine", renderMine);
   safeRender("tasks", renderTasks);
   safeRender("friends", renderFriendsStatic);
@@ -951,6 +1060,7 @@ function showTab(name) {
 
 /* ---------- Evenements ---------- */
 function bind() {
+  bindGradePlus();
   $("#coin").addEventListener("click", onMine);
   $("#btnMine").addEventListener("click", onMine);
   $$("nav.bottom button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
