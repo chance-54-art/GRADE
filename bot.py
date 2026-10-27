@@ -52,7 +52,7 @@ CURRENCY = "GRAD"
 # Langues de l'interface (10 plus utilisees), stockees dans users.lang
 LANG_CODES = ("fr", "en", "zh", "hi", "es", "ar", "bn", "pt", "ru", "ur", "id", "de", "ja", "sw", "mr", "te", "tr", "ta", "vi", "ko", "it", "th", "gu", "fa", "pl", "uk", "ro", "nl", "el", "hu", "cs", "sv", "da", "fi", "no", "he", "ms", "tl", "am", "ha", "yo", "ig", "zu", "xh", "af", "so", "rw", "ln", "kg", "lu", "ny", "sn", "om", "ti", "lg", "wo", "ff", "mg", "ku", "ps", "az", "uz", "kk", "ky", "tg", "tk", "hy", "ka", "mn", "ne", "si", "my", "km", "lo", "sr", "hr", "bs", "sk", "sl", "lt", "lv", "et", "is", "ga", "ca", "gl", "eu", "mt", "sq", "mk", "bg", "be", "lb", "fo", "ceb", "jv", "su", "ml", "kn", "pa")
 
-MINE_REWARD = 1000            # GRAD gagnes a chaque minage
+MINE_REWARD = 240             # GRAD par cycle de 24 h (= 10 GRAD par heure de base)
 # Daily Rewards: jour 1 = 100 GRAD, +50 par jour, jour 7 = 400 GRAD, puis le cycle reprend
 DAILY_BASE = 100
 DAILY_STEP = 50
@@ -191,7 +191,7 @@ def db_get_user(uid: int):
 
 
 def cycle_accrued(last_mine_at, now: float, mult: float = 1.0) -> int:
-    """GRAD du cycle en cours: floor(1000 * mult * temps ecoule / 24 h), plafonne a 1000 * mult."""
+    """GRAD du cycle en cours: floor(MINE_REWARD * mult * temps ecoule / 24 h), plafonne a MINE_REWARD * mult."""
     if last_mine_at is None:
         return 0
     elapsed = min(max(now - last_mine_at, 0.0), MINE_COOLDOWN)
@@ -694,7 +694,7 @@ async def act_me(uid, body, request):
 
 async def act_mine(uid, body, request):
     """Demarre un cycle de minage (une fois par 24 h). Le GRAD du cycle s'accumule
-    ensuite en continu: floor(1000 * temps ecoule / 24 h), verse au solde a chaque lecture.
+    ensuite en continu: floor(MINE_REWARD * temps ecoule / 24 h), verse au solde a chaque lecture.
     La verification et le demarrage sont une seule requete SQL (pas de course entre deux clics)."""
     settle_user(uid)  # solde le cycle precedent (plein) avant d'en commencer un nouveau
     now = time.time()
@@ -971,7 +971,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     lines = [
         "⛏ Bienvenue sur GRADE !",
         "",
-        f"Appuie sur Miner une fois par heure pour gagner {MINE_REWARD} {CURRENCY}. "
+        f"Appuie sur Miner : tu mines {MINE_REWARD // 24} {CURRENCY} par heure ({MINE_REWARD} {CURRENCY} par cycle de 24 h). "
         "Invite tes amis et gagne encore plus.",
     ]
     if created:
@@ -1001,7 +1001,7 @@ async def cmd_aide(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/start : ouvrir GRADE\n"
         "/solde : voir ton solde\n"
         "/aide : cette aide\n\n"
-        f"Tu peux miner {MINE_REWARD} {CURRENCY} une fois par heure. "
+        f"Tu mines {MINE_REWARD // 24} {CURRENCY} par heure ({MINE_REWARD} {CURRENCY} par cycle de 24 h). "
         "Parraine tes amis avec ton lien depuis l'onglet Amis."
     )
 

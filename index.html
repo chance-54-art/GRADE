@@ -228,7 +228,8 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
     <div class="cards">
       <div class="cc" id="cycleCard">
         <div class="cc-ico">⛏ Cycle</div>
-        <div class="cc-val" id="cycleTxt">+1000 GRAD / cycle</div>
+        <div class="cc-val" id="cycleTxt">+10 GRAD / heure</div>
+        <small id="cycleSub">+240 GRAD / cycle</small>
       </div>
       <div class="cc">
         <div class="cc-ico">⏳ Prochain minage</div>
@@ -242,7 +243,7 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
       <div>Minages <b id="minesTxt">0</b></div>
       <div>Amis <b id="refTxt">0</b></div>
     </div>
-    <span id="rewardTxt" class="hidden">1000</span>
+    <span id="rewardTxt" class="hidden">240</span>
   </section>
 
   <!-- TACHES -->
@@ -649,7 +650,9 @@ function renderMine() {
   $("#minesTxt").textContent = fmt(S.me.mines_count);
   $("#refTxt").textContent = fmt(S.me.referrals);
   $("#rewardTxt").textContent = fmt(S.reward);
-  $("#cycleTxt").textContent = ready ? "Prêt à miner" : "+" + fmt(S.reward) + " GRAD / cycle";
+  const hr = S.me.hourly_rate != null ? S.me.hourly_rate : S.reward / 24;
+  $("#cycleTxt").textContent = ready ? "Prêt à miner" : "+" + fmt(hr) + " GRAD / heure";
+  $("#cycleSub").textContent = "+" + fmt(S.reward) + " GRAD / cycle";
   const gained = Math.max(0, bal - (S.lastShown || 0));
   if (gained > 0) { const b = $("#balMain"); b.classList.remove("tick"); void b.offsetWidth; b.classList.add("tick"); }
   S.lastShown = bal;
