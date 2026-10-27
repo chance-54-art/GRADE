@@ -1,4 +1,4 @@
-"""GRADE - mini app Telegram de minage (monnaie GRA).
+"""GRADE - mini app Telegram de minage (monnaie GRAD).
 
 Minage une fois par heure, decide et verifie cote serveur.
 Un seul processus: bot Telegram (webhook), serveur HTTP aiohttp qui sert
@@ -47,12 +47,14 @@ CHANNEL_LINK = os.environ.get("CHANNEL_LINK", "").strip()
 
 INDEX_PATH = Path(__file__).resolve().parent / "index.html"
 APP_NAME = "GRADE"
-CURRENCY = "GRA"
+CURRENCY = "GRAD"
+# Langues de l'interface (10 plus utilisees), stockees dans users.lang
+LANG_CODES = ("fr", "en", "es", "pt", "ar", "sw", "zh", "hi", "ru", "de")
 
-MINE_REWARD = 50              # GRA gagnes a chaque minage
+MINE_REWARD = 50              # GRAD gagnes a chaque minage
 MINE_COOLDOWN = 3600          # un minage toutes les 1 h
-REFERRAL_BONUS = 500          # GRA pour le parrain a chaque ami inscrit
-REFERRED_WELCOME = 250        # GRA offerts a l'ami invite
+REFERRAL_BONUS = 500          # GRAD pour le parrain a chaque ami inscrit
+REFERRED_WELCOME = 250        # GRAD offerts a l'ami invite
 INITDATA_MAX_AGE = 86400
 
 TASKS = [
@@ -99,6 +101,8 @@ def migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN display_name TEXT")
     if "notifications" not in cols:
         conn.execute("ALTER TABLE users ADD COLUMN notifications INTEGER NOT NULL DEFAULT 1")
+    if "lang" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN lang TEXT NOT NULL DEFAULT 'fr'")
     conn.commit()
 
 
@@ -207,13 +211,15 @@ def build_state(uid: int) -> dict:
         "name": display_name_of(row),
         "display_name": row["display_name"] or "",
         "notifications": bool(row["notifications"]),
-        "lang": "fr",
+        "lang": row["lang"] if row["lang"] in LANG_CODES else "fr",
         "username": row["username"] or "",
         "balance": balance,
         "mines_count": row["mines_count"],
         "wallet": row["wallet"] or "",
         "referrals": refs,
         "referral_earned": refs * REFERRAL_BONUS,
+        "referral_bonus": REFERRAL_BONUS,
+        "referred_welcome": REFERRED_WELCOME,
         "rank": db_rank(balance),
         "created": row["created"],
         "ref_link": f"https://t.me/{BOT_USERNAME}?start=ref_{uid}" if BOT_USERNAME else "",
@@ -398,6 +404,16 @@ async def act_settings_notifications(uid, body, request):
             **build_state(uid)}
 
 
+async def act_settings_lang(uid, body, request):
+    """Langue de l'interface (une des 10 langues), stockee en SQLite."""
+    code = str(body.get("lang", "")).strip().lower()
+    if code not in LANG_CODES:
+        raise ApiError("Langue non prise en charge.")
+    DB.execute("UPDATE users SET lang = ? WHERE id = ?", (code, uid))
+    DB.commit()
+    return {"ok": True, **build_state(uid)}
+
+
 async def act_settings_reset(uid, body, request):
     """Remet solde, minages et tâches reclamees a zero. Amis, portefeuille et pseudo sont conserves."""
     if str(body.get("confirm", "")).strip().upper() != "RESET":
@@ -417,6 +433,7 @@ ACTIONS = {
     "wallet_set": act_wallet_set,
     "settings_name": act_settings_name,
     "settings_notifications": act_settings_notifications,
+    "settings_lang": act_settings_lang,
     "settings_reset": act_settings_reset,
 }
 

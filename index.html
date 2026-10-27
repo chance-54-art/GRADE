@@ -33,9 +33,11 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:3px;font-size:18px;
   background:linear-gradient(90deg,#fff3b0,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo{
-  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#2a1a00;font-weight:900;font-size:15px;
-  background:radial-gradient(circle at 30% 25%,#fff6c8,var(--gold) 35%,var(--gold2) 75%,var(--gold3));
-  box-shadow:0 0 14px rgba(245,197,66,.5);-webkit-text-fill-color:#2a1a00;
+  width:30px;height:30px;border-radius:50%;display:block;object-fit:cover;
+  box-shadow:0 0 14px rgba(245,197,66,.5);
+}
+.coin-img{
+  position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;z-index:0;pointer-events:none;
 }
 .hdr-bal{font-weight:800;font-size:16px;color:var(--gold);font-variant-numeric:tabular-nums}
 .hdr-bal small{font-size:11px;color:var(--muted);font-weight:700;margin-left:2px}
@@ -121,7 +123,7 @@ main{padding:14px 14px 104px;max-width:520px;margin:0 auto}
 }
 @keyframes spark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
 
-.status{text-align:center;font-size:15px;font-weight:700;margin:12px 0 4px;color:var(--gold);font-variant-numeric:tabular-nums}
+.status{text-align:center;font-size:22px;font-weight:900;margin:14px 0 6px;letter-spacing:.5px;color:var(--gold);font-variant-numeric:tabular-nums}
 .status.ok{color:var(--ok)}
 .status.wait{color:var(--muted)}
 
@@ -226,15 +228,15 @@ nav.bottom button.active{color:var(--gold);background:rgba(245,197,66,.09)}
 
 <div id="gate" class="gate hidden">
   <div class="gate-box">
-    <div class="coin-mini">GRA</div>
+    <div class="coin-mini">GRAD</div>
     <h2>Ouvre GRADE depuis Telegram</h2>
     <p>Cette app fonctionne uniquement dans Telegram. Ouvre le bot et appuie sur le bouton "Ouvrir GRADE".</p>
   </div>
 </div>
 
 <header class="top">
-  <div class="brand"><span class="logo">M</span>GRADE</div>
-  <div class="hdr-bal"><span id="hdrBal">0</span><small>GRA</small></div>
+  <div class="brand"><img class="logo" src="grad-coin.jpg" alt="GRAD">GRADE</div>
+  <div class="hdr-bal"><span id="hdrBal">0</span><small>GRAD</small></div>
 </header>
 
 <main>
@@ -242,17 +244,18 @@ nav.bottom button.active{color:var(--gold);background:rgba(245,197,66,.09)}
   <!-- MINER -->
   <section class="screen active" id="s-mine">
     <div class="card" style="margin-bottom:0">
-      <div class="lbl">Ton solde</div>
-      <div class="big"><span id="balMain">0</span> <span class="unit">GRA</span></div>
-      <div class="sub">Gain par minage : <b id="rewardTxt">50</b> GRA · un minage par heure</div>
+      <div class="lbl" data-i18n="balance_label">Ton solde</div>
+      <div class="big"><span id="balMain">0</span> <span class="unit">GRAD</span></div>
+      <div class="sub"><span data-i18n="per_mine">Gain par minage</span> : <b id="rewardTxt">50</b> GRAD · <span data-i18n="per_hour">un minage par heure</span></div>
     </div>
 
     <div class="mine-stage" id="stage">
       <div class="halo"></div>
       <button id="coin" class="coin" aria-label="Miner">
+        <img class="coin-img" src="grad-coin.jpg" alt="">
         <span class="coin-inner">
           <span class="coin-ico">⛏</span>
-          <span class="coin-mnx">GRA</span>
+          <span class="coin-mnx">GRAD</span>
         </span>
       </button>
     </div>
@@ -261,67 +264,64 @@ nav.bottom button.active{color:var(--gold);background:rgba(245,197,66,.09)}
     <button class="btn full big-btn" id="btnMine" disabled>⛏ Miner</button>
 
     <div class="stats-grid">
-      <div class="stat"><span>Rang</span><b id="rankTxt">-</b></div>
-      <div class="stat"><span>Minages</span><b id="minesTxt">0</b></div>
-      <div class="stat"><span>Amis</span><b id="refTxt">0</b></div>
+      <div class="stat"><span data-i18n="rank">Rang</span><b id="rankTxt">-</b></div>
+      <div class="stat"><span data-i18n="mines">Minages</span><b id="minesTxt">0</b></div>
+      <div class="stat"><span data-i18n="friends">Amis</span><b id="refTxt">0</b></div>
     </div>
-    <div class="hint" style="text-align:center;margin-top:12px">
+    <div class="hint" data-i18n="mine_hint" style="text-align:center;margin-top:12px">
       Reviens chaque heure pour miner encore. Le compte à rebours démarre après chaque minage.
     </div>
   </section>
 
   <!-- TACHES -->
   <section class="screen" id="s-tasks">
-    <h2 class="title">Tâches <span>✅</span></h2>
-    <p class="muted">Termine les tâches pour gagner des GRA bonus. Chaque tâche se réclame une seule fois.</p>
+    <h2 class="title"><em data-i18n="tab_tasks" style="font-style:normal">Tâches</em> <span>✅</span></h2>
+    <p class="muted" data-i18n="tasks_desc">Termine les tâches pour gagner des GRAD bonus. Chaque tâche se réclame une seule fois.</p>
     <div id="taskList"><div class="loading">Chargement...</div></div>
   </section>
 
   <!-- AMIS -->
   <section class="screen" id="s-friends">
-    <h2 class="title">Amis <span>👥</span></h2>
-    <p class="muted">
-      Invite tes amis avec ton lien. Tu gagnes <b id="bonusTxt" style="color:var(--gold)">500</b> GRA
-      pour chaque ami inscrit, et ton ami reçoit <b id="welcomeTxt" style="color:var(--gold)">250</b> GRA.
-    </p>
+    <h2 class="title"><em data-i18n="friends" style="font-style:normal">Amis</em> <span>👥</span></h2>
+    <p class="muted" id="frDesc"></p>
     <div class="card">
-      <div class="lbl">Ton lien de parrainage</div>
+      <div class="lbl" data-i18n="ref_label">Ton lien de parrainage</div>
       <div class="link-box">
         <input id="refLink" readonly value="">
-        <button class="btn sm ghost" id="btnCopy">Copier</button>
+        <button class="btn sm ghost" id="btnCopy" data-i18n="copy">Copier</button>
       </div>
-      <button class="btn full" id="btnShare" style="margin-top:12px">📤 Partager le lien</button>
+      <button class="btn full" id="btnShare" data-i18n="share" style="margin-top:12px">📤 Partager le lien</button>
     </div>
     <div class="stats-grid" style="margin-bottom:12px">
-      <div class="stat"><span>Amis</span><b id="frCount">0</b></div>
-      <div class="stat" style="grid-column:span 2"><span>Gains parrainage</span><b id="frEarned">0 GRA</b></div>
+      <div class="stat"><span data-i18n="friends">Amis</span><b id="frCount">0</b></div>
+      <div class="stat" style="grid-column:span 2"><span data-i18n="gains_ref">Gains parrainage</span><b id="frEarned">0 GRAD</b></div>
     </div>
     <div class="card">
-      <div class="lbl" style="margin-bottom:6px">Tes filleuls</div>
+      <div class="lbl" style="margin-bottom:6px" data-i18n="your_refs">Tes filleuls</div>
       <div id="frList"><div class="loading">Chargement...</div></div>
     </div>
   </section>
 
   <!-- PORTEFEUILLE -->
   <section class="screen" id="s-wallet">
-    <h2 class="title">Portefeuille <span>💼</span></h2>
-    <p class="muted">Ton solde en GRA et l'adresse où tu veux recevoir tes gains. Les retraits seront disponibles plus tard.</p>
+    <h2 class="title"><em data-i18n="tab_wallet" style="font-style:normal">Portefeuille</em> <span>💼</span></h2>
+    <p class="muted" data-i18n="wallet_desc">Ton solde en GRAD et l'adresse où tu veux recevoir tes gains. Les retraits seront disponibles plus tard.</p>
     <div class="card">
-      <div class="lbl">Solde disponible</div>
-      <div class="big" style="font-size:32px"><span id="walBal">0</span> <span class="unit">GRA</span></div>
+      <div class="lbl" data-i18n="balance_avail">Solde disponible</div>
+      <div class="big" style="font-size:32px"><span id="walBal">0</span> <span class="unit">GRAD</span></div>
     </div>
     <div class="card">
-      <div class="lbl">Adresse actuelle</div>
+      <div class="lbl" data-i18n="addr_now">Adresse actuelle</div>
       <div class="addr" id="walletNow">Aucune adresse enregistrée</div>
-      <input id="walletIn" class="field" type="text" maxlength="120" placeholder="Colle ton adresse de portefeuille" autocomplete="off">
-      <button class="btn full" id="btnWallet" style="margin-top:10px">Enregistrer l'adresse</button>
-      <div class="hint">Ajouter ton portefeuille te rapporte aussi 200 GRA via la tâche correspondante.</div>
+      <input id="walletIn" class="field" type="text" maxlength="120" placeholder="Colle ton adresse de portefeuille" data-i18n-ph="wallet_ph" autocomplete="off">
+      <button class="btn full" id="btnWallet" data-i18n="save_addr" style="margin-top:10px">Enregistrer l'adresse</button>
+      <div class="hint" data-i18n="wallet_hint">Ajouter ton portefeuille te rapporte aussi 200 GRAD via la tâche correspondante.</div>
     </div>
   </section>
 
   <!-- PROFIL -->
   <section class="screen" id="s-profile">
-    <h2 class="title">Profil <span>👤</span></h2>
+    <h2 class="title"><em data-i18n="tab_profile" style="font-style:normal">Profil</em> <span>👤</span></h2>
     <div class="card">
       <div class="profile">
         <div class="avatar" id="avatar">M</div>
@@ -332,49 +332,49 @@ nav.bottom button.active{color:var(--gold);background:rgba(245,197,66,.09)}
       </div>
     </div>
     <div class="card">
-      <div class="kv"><span>Solde</span><b id="kvBal">0 GRA</b></div>
-      <div class="kv"><span>Rang</span><b id="kvRank">-</b></div>
-      <div class="kv"><span>Minages effectués</span><b id="kvMines">0</b></div>
-      <div class="kv"><span>Amis parrainés</span><b id="kvRef">0</b></div>
-      <div class="kv"><span>Membre depuis</span><b id="kvSince">-</b></div>
+      <div class="kv"><span data-i18n="balance_kv">Solde</span><b id="kvBal">0 GRAD</b></div>
+      <div class="kv"><span data-i18n="rank">Rang</span><b id="kvRank">-</b></div>
+      <div class="kv"><span data-i18n="mines_done">Minages effectués</span><b id="kvMines">0</b></div>
+      <div class="kv"><span data-i18n="referred">Amis parrainés</span><b id="kvRef">0</b></div>
+      <div class="kv"><span data-i18n="member_since">Membre depuis</span><b id="kvSince">-</b></div>
     </div>
-    <div class="title" style="font-size:17px;margin:14px 2px 8px">Classement <span>🏆</span></div>
+    <div class="title" style="font-size:17px;margin:14px 2px 8px"><em data-i18n="leaderboard" style="font-style:normal">Classement</em> <span>🏆</span></div>
     <div id="topList"><div class="loading">Chargement...</div></div>
 
-    <div class="title" style="font-size:17px;margin:18px 2px 8px">Réglages du compte <span>⚙️</span></div>
+    <div class="title" style="font-size:17px;margin:18px 2px 8px"><em data-i18n="settings" style="font-style:normal">Réglages du compte</em> <span>⚙️</span></div>
     <div class="card">
-      <div class="set-title">Pseudo affiché</div>
-      <div class="muted" style="margin:0 0 4px">Ce nom apparaît dans le classement et la liste de tes filleuls. Laisse vide pour utiliser ton prénom Telegram.</div>
-      <input id="setName" class="field" type="text" maxlength="24" placeholder="Ton pseudo (24 caractères max)" autocomplete="off">
-      <button class="btn full" id="btnSetName" style="margin-top:10px">Enregistrer le pseudo</button>
+      <div class="set-title" data-i18n="display_name">Pseudo affiché</div>
+      <div class="muted" data-i18n="name_desc" style="margin:0 0 4px">Ce nom apparaît dans le classement et la liste de tes filleuls. Laisse vide pour utiliser ton prénom Telegram.</div>
+      <input id="setName" class="field" type="text" maxlength="24" placeholder="Ton pseudo (24 caractères max)" data-i18n-ph="name_ph" autocomplete="off">
+      <button class="btn full" id="btnSetName" data-i18n="save_name" style="margin-top:10px">Enregistrer le pseudo</button>
     </div>
     <div class="card">
-      <div class="set-title">Portefeuille</div>
-      <div class="lbl">Adresse actuelle</div>
+      <div class="set-title" data-i18n="tab_wallet">Portefeuille</div>
+      <div class="lbl" data-i18n="addr_now">Adresse actuelle</div>
       <div class="addr" id="setWalletNow">Aucune adresse enregistrée</div>
-      <input id="setWalletIn" class="field" type="text" maxlength="120" placeholder="Colle ou modifie ton adresse" autocomplete="off">
-      <button class="btn full" id="btnSetWallet" style="margin-top:10px">Enregistrer l'adresse</button>
+      <input id="setWalletIn" class="field" type="text" maxlength="120" placeholder="Colle ou modifie ton adresse" data-i18n-ph="wallet_ph2" autocomplete="off">
+      <button class="btn full" id="btnSetWallet" data-i18n="save_addr" style="margin-top:10px">Enregistrer l'adresse</button>
     </div>
     <div class="card">
-      <div class="set-title">Préférences</div>
+      <div class="set-title" data-i18n="prefs">Préférences</div>
       <div class="set-row">
-        <div class="k">Langue<small>Français (langue fixe)</small></div>
-        <b style="color:var(--gold)">Français</b>
+        <div class="k"><span data-i18n="language">Langue</span><small data-i18n="language_desc">Langue de l'interface</small></div>
+        <select id="setLang" class="field" style="width:auto;margin-top:0;padding:8px 10px"></select>
       </div>
       <div class="set-row">
-        <div class="k">Notifications<small>Rappels quand ton minage est prêt</small></div>
+        <div class="k"><span data-i18n="notifications">Notifications</span><small data-i18n="notif_desc">Rappels quand ton minage est prêt</small></div>
         <button class="switch" id="swNotif" aria-label="Notifications" role="switch" aria-checked="true"></button>
       </div>
     </div>
     <div class="card">
-      <div class="set-title">Zone de danger</div>
-      <div class="muted" style="margin:0 0 10px">Remet ton solde et tes minages à zéro, et efface tes tâches réclamées. Tes amis, ton portefeuille et ton pseudo sont conservés.</div>
-      <button class="btn full danger" id="btnReset">Réinitialiser mon compte</button>
+      <div class="set-title" data-i18n="danger">Zone de danger</div>
+      <div class="muted" data-i18n="reset_desc" style="margin:0 0 10px">Remet ton solde et tes minages à zéro, et efface tes tâches réclamées. Tes amis, ton portefeuille et ton pseudo sont conservés.</div>
+      <button class="btn full danger" id="btnReset" data-i18n="reset_btn">Réinitialiser mon compte</button>
       <div id="resetBox" class="confirm-box hidden">
-        <p>Action définitive : ton solde GRA et tes minages repartent à zéro. Confirmer ?</p>
+        <p data-i18n="reset_confirm">Action définitive : ton solde GRAD et tes minages repartent à zéro. Confirmer ?</p>
         <div class="row-btn">
-          <button class="btn sm ghost" id="btnResetNo">Annuler</button>
-          <button class="btn sm danger" id="btnResetYes">Oui, réinitialiser</button>
+          <button class="btn sm ghost" id="btnResetNo" data-i18n="cancel">Annuler</button>
+          <button class="btn sm danger" id="btnResetYes" data-i18n="reset_yes">Oui, réinitialiser</button>
         </div>
       </div>
     </div>
@@ -383,11 +383,11 @@ nav.bottom button.active{color:var(--gold);background:rgba(245,197,66,.09)}
 </main>
 
 <nav class="bottom">
-  <button data-tab="mine" class="active"><span class="ni">⛏</span>Miner</button>
-  <button data-tab="tasks"><span class="ni">✅</span>Tâches</button>
-  <button data-tab="friends"><span class="ni">👥</span>Amis</button>
-  <button data-tab="wallet"><span class="ni">💼</span>Portefeuille</button>
-  <button data-tab="profile"><span class="ni">👤</span>Profil</button>
+  <button data-tab="mine" class="active"><span class="ni">⛏</span><span data-i18n="tab_mine">Miner</span></button>
+  <button data-tab="tasks"><span class="ni">✅</span><span data-i18n="tab_tasks">Tâches</span></button>
+  <button data-tab="friends"><span class="ni">👥</span><span data-i18n="friends">Amis</span></button>
+  <button data-tab="wallet"><span class="ni">💼</span><span data-i18n="tab_wallet">Portefeuille</span></button>
+  <button data-tab="profile"><span class="ni">👤</span><span data-i18n="tab_profile">Profil</span></button>
 </nav>
 
 <script>
@@ -413,7 +413,7 @@ const S = {
   me: null, tasks: [],
   nextAt: 0,        // timestamp serveur (secondes) du prochain minage, 0 = maintenant
   offset: 0,        // decalage horloge serveur - horloge du telephone
-  reward: 1000, cur: "GRA",
+  reward: 50, cur: "GRAD", lang: "fr",
   busy: false,
 };
 
@@ -453,18 +453,70 @@ async function call(action, payload) {
   catch (e) { return { ok: false, error: "Réponse invalide du serveur." }; }
 }
 
+/* ---------- Langues (10 plus utilisees) ---------- */
+const LANG_NAMES = { fr: "Français", en: "English", es: "Español", pt: "Português", ar: "العربية", sw: "Kiswahili", zh: "中文", hi: "हिन्दी", ru: "Русский", de: "Deutsch" };
+const I18N = {
+  fr: { balance_label: "Ton solde", per_mine: "Gain par minage", per_hour: "un minage par heure", rank: "Rang", mines: "Minages", friends: "Amis", tasks_desc: "Termine les tâches pour gagner des GRAD bonus. Chaque tâche se réclame une seule fois.", tab_tasks: "Tâches", tab_mine: "Miner", ref_label: "Ton lien de parrainage", copy: "Copier", share: "Partager", gains_ref: "Gains parrainage", your_refs: "Tes filleuls", tab_wallet: "Portefeuille", wallet_desc: "Ton solde en GRAD et l'adresse où tu veux recevoir tes gains. Les retraits seront disponibles plus tard.", balance_avail: "Solde disponible", addr_now: "Adresse actuelle", wallet_ph: "Colle ton adresse de portefeuille", wallet_ph2: "Colle ou modifie ton adresse", save_addr: "Enregistrer l'adresse", wallet_hint: "Ajouter ton portefeuille te rapporte aussi 200 GRAD via la tâche correspondante.", tab_profile: "Profil", balance_kv: "Solde", mines_done: "Minages effectués", referred: "Amis parrainés", member_since: "Membre depuis", leaderboard: "Classement", settings: "Réglages du compte", display_name: "Pseudo affiché", name_ph: "Ton pseudo (24 caractères max)", save_name: "Enregistrer le pseudo", prefs: "Préférences", language: "Langue", language_desc: "Langue de l'interface", notifications: "Notifications", notif_desc: "Rappels quand ton minage est prêt", danger: "Zone de danger", reset_btn: "Réinitialiser mon compte", reset_confirm: "Action définitive : ton solde GRAD et tes minages repartent à zéro. Confirmer ?", cancel: "Annuler", reset_yes: "Oui, réinitialiser", busy: "Minage...", btn_mine: "Miner", in_progress: "Minage en cours...", ready: "Prêt à miner : +{n} {cur}", next_in: "Prochain minage dans {t}", claimed: "Réclamée", open: "Ouvrir", claim: "Réclamer", no_refs: "Aucun filleul pour le moment. Partage ton lien !", share_text: "Rejoins-moi sur GRADE et gagne des GRAD avec moi !", no_addr: "Aucune adresse enregistrée", lang_saved: "Langue enregistrée", invite_desc: "Invite tes amis avec ton lien. Tu gagnes {b} GRAD pour chaque ami inscrit, et ton ami reçoit {w} GRAD." },
+  en: { balance_label: "Your balance", per_mine: "Reward per mine", per_hour: "one mine per hour", rank: "Rank", mines: "Mines", friends: "Friends", tasks_desc: "Complete tasks to earn bonus GRAD. Each task can be claimed once.", tab_tasks: "Tasks", tab_mine: "Mine", ref_label: "Your referral link", copy: "Copy", share: "Share", gains_ref: "Referral earnings", your_refs: "Your referrals", tab_wallet: "Wallet", wallet_desc: "Your GRAD balance and the address where you want to receive your earnings. Withdrawals will come later.", balance_avail: "Available balance", addr_now: "Current address", wallet_ph: "Paste your wallet address", wallet_ph2: "Paste or edit your address", save_addr: "Save address", wallet_hint: "Adding your wallet also earns you 200 GRAD through the matching task.", tab_profile: "Profile", balance_kv: "Balance", mines_done: "Mines done", referred: "Referred friends", member_since: "Member since", leaderboard: "Leaderboard", settings: "Account settings", display_name: "Display name", name_ph: "Your name (24 characters max)", save_name: "Save name", prefs: "Preferences", language: "Language", language_desc: "Interface language", notifications: "Notifications", notif_desc: "Reminders when your mine is ready", danger: "Danger zone", reset_btn: "Reset my account", reset_confirm: "This is permanent: your GRAD balance and mines go back to zero. Confirm?", cancel: "Cancel", reset_yes: "Yes, reset", busy: "Mining...", btn_mine: "Mine", in_progress: "Mining in progress...", ready: "Ready to mine: +{n} {cur}", next_in: "Next mine in {t}", claimed: "Claimed", open: "Open", claim: "Claim", no_refs: "No referrals yet. Share your link!", share_text: "Join me on GRADE and earn GRAD together!", no_addr: "No address saved", lang_saved: "Language saved", invite_desc: "Invite friends with your link. You earn {b} GRAD for each friend who signs up, and your friend gets {w} GRAD." },
+  es: { balance_label: "Tu saldo", per_mine: "Ganancia por minado", per_hour: "un minado por hora", rank: "Puesto", mines: "Minados", friends: "Amigos", tasks_desc: "Completa tareas para ganar GRAD extra. Cada tarea se reclama una sola vez.", tab_tasks: "Tareas", tab_mine: "Minar", ref_label: "Tu enlace de referido", copy: "Copiar", share: "Compartir", gains_ref: "Ganancias por referidos", your_refs: "Tus referidos", tab_wallet: "Billetera", wallet_desc: "Tu saldo en GRAD y la dirección donde quieres recibir tus ganancias. Los retiros llegarán más adelante.", balance_avail: "Saldo disponible", addr_now: "Dirección actual", wallet_ph: "Pega tu dirección de billetera", wallet_ph2: "Pega o edita tu dirección", save_addr: "Guardar dirección", wallet_hint: "Añadir tu billetera también te da 200 GRAD con la tarea correspondiente.", tab_profile: "Perfil", balance_kv: "Saldo", mines_done: "Minados realizados", referred: "Amigos referidos", member_since: "Miembro desde", leaderboard: "Clasificación", settings: "Ajustes de la cuenta", display_name: "Nombre visible", name_ph: "Tu nombre (máx. 24 caracteres)", save_name: "Guardar nombre", prefs: "Preferencias", language: "Idioma", language_desc: "Idioma de la interfaz", notifications: "Notificaciones", notif_desc: "Recordatorios cuando tu minado esté listo", danger: "Zona de peligro", reset_btn: "Reiniciar mi cuenta", reset_confirm: "Es definitivo: tu saldo GRAD y tus minados volverán a cero. ¿Confirmar?", cancel: "Cancelar", reset_yes: "Sí, reiniciar", busy: "Minando...", btn_mine: "Minar", in_progress: "Minado en curso...", ready: "Listo para minar: +{n} {cur}", next_in: "Próximo minado en {t}", claimed: "Reclamada", open: "Abrir", claim: "Reclamar", no_refs: "Aún no tienes referidos. ¡Comparte tu enlace!", share_text: "¡Únete a GRADE conmigo y gana GRAD juntos!", no_addr: "Ninguna dirección guardada", lang_saved: "Idioma guardado", invite_desc: "Invita a tus amigos con tu enlace. Ganas {b} GRAD por cada amigo que se registre, y tu amigo recibe {w} GRAD." },
+  pt: { balance_label: "Seu saldo", per_mine: "Ganho por mineração", per_hour: "uma mineração por hora", rank: "Posição", mines: "Mineração", friends: "Amigos", tasks_desc: "Complete tarefas para ganhar GRAD bônus. Cada tarefa pode ser resgatada uma vez.", tab_tasks: "Tarefas", tab_mine: "Minerar", ref_label: "Seu link de indicação", copy: "Copiar", share: "Compartilhar", gains_ref: "Ganhos de indicação", your_refs: "Suas indicações", tab_wallet: "Carteira", wallet_desc: "Seu saldo em GRAD e o endereço onde quer receber seus ganhos. Os saques estarão disponíveis depois.", balance_avail: "Saldo disponível", addr_now: "Endereço atual", wallet_ph: "Cole o endereço da carteira", wallet_ph2: "Cole ou edite seu endereço", save_addr: "Salvar endereço", wallet_hint: "Adicionar sua carteira também rende 200 GRAD pela tarefa correspondente.", tab_profile: "Perfil", balance_kv: "Saldo", mines_done: "Minerações feitas", referred: "Amigos indicados", member_since: "Membro desde", leaderboard: "Classificação", settings: "Configurações da conta", display_name: "Nome exibido", name_ph: "Seu nome (máx. 24 caracteres)", save_name: "Salvar nome", prefs: "Preferências", language: "Idioma", language_desc: "Idioma da interface", notifications: "Notificações", notif_desc: "Lembretes quando sua mineração estiver pronta", danger: "Zona de perigo", reset_btn: "Redefinir minha conta", reset_confirm: "Isto é definitivo: seu saldo GRAD e suas mineradas voltam a zero. Confirmar?", cancel: "Cancelar", reset_yes: "Sim, redefinir", busy: "Minerando...", btn_mine: "Minerar", in_progress: "Mineração em andamento...", ready: "Pronto para minerar: +{n} {cur}", next_in: "Próxima mineração em {t}", claimed: "Resgatada", open: "Abrir", claim: "Resgatar", no_refs: "Nenhuma indicação ainda. Compartilhe seu link!", share_text: "Entre no GRADE comigo e ganhe GRAD junto!", no_addr: "Nenhum endereço salvo", lang_saved: "Idioma salvo", invite_desc: "Convide amigos com seu link. Você ganha {b} GRAD por cada amigo que se cadastrar, e seu amigo ganha {w} GRAD." },
+  ar: { balance_label: "رصيدك", per_mine: "المكافأة لكل تعدين", per_hour: "تعدين واحد في الساعة", rank: "الترتيب", mines: "التعدين", friends: "الأصدقاء", tasks_desc: "أكمل المهام لتربح GRAD إضافية. يمكن استلام كل مهمة مرة واحدة.", tab_tasks: "المهام", tab_mine: "تعدين", ref_label: "رابط الإحالة الخاص بك", copy: "نسخ", share: "مشاركة", gains_ref: "أرباح الإحالة", your_refs: "إحالاتك", tab_wallet: "المحفظة", wallet_desc: "رصيدك بـ GRAD والعنوان الذي تريد استلام أرباحك عليه. ستتوفر عمليات السحب لاحقاً.", balance_avail: "الرصيد المتاح", addr_now: "العنوان الحالي", wallet_ph: "الصق عنوان محفظتك", wallet_ph2: "الصق عنوانك أو عدّله", save_addr: "حفظ العنوان", wallet_hint: "إضافة محفظتك تكسبك أيضاً 200 GRAD عبر المهمة المطابقة.", tab_profile: "الملف", balance_kv: "الرصيد", mines_done: "عمليات التعدين المنجزة", referred: "الأصدقاء المُحالون", member_since: "عضو منذ", leaderboard: "لوحة المتصدرين", settings: "إعدادات الحساب", display_name: "الاسم المعروض", name_ph: "اسمك (24 حرفاً كحد أقصى)", save_name: "حفظ الاسم", prefs: "التفضيلات", language: "اللغة", language_desc: "لغة الواجهة", notifications: "الإشعارات", notif_desc: "تذكيرات عند جاهزية التعدين", danger: "منطقة الخطر", reset_btn: "إعادة تعيين حسابي", reset_confirm: "هذا نهائي: رصيدك GRAD وعمليات التعدين ستعود إلى الصفر. تأكيد؟", cancel: "إلغاء", reset_yes: "نعم، أعد التعيين", busy: "جارٍ التعدين...", btn_mine: "تعدين", in_progress: "التعدين جارٍ...", ready: "جاهز للتعدين: +{n} {cur}", next_in: "التعدين التالي خلال {t}", claimed: "تم الاستلام", open: "فتح", claim: "مطالبة", no_refs: "لا توجد إحالات بعد. شارك رابطك!", share_text: "انضم إليّ في GRADE واربح GRAD معاً!", no_addr: "لا يوجد عنوان محفوظ", lang_saved: "تم حفظ اللغة", invite_desc: "ادعُ أصدقاءك برابطك. تربح {b} GRAD عن كل صديق يسجّل، ويحصل صديقك على {w} GRAD." },
+  sw: { balance_label: "Salio lako", per_mine: "Zawadi kwa kila uchimbaji", per_hour: "uchimbaji mmoja kwa saa", rank: "Nafasi", mines: "Uchimbaji", friends: "Marafiki", tasks_desc: "Kamilisha kazi upate GRAD za ziada. Kila kazi inaweza kudaiwa mara moja.", tab_tasks: "Kazi", tab_mine: "Chimba", ref_label: "Kiungo chako cha rufaa", copy: "Nakili", share: "Shiriki", gains_ref: "Mapato ya rufaa", your_refs: "Waliokualikwa wako", tab_wallet: "Pochi", wallet_desc: "Salio lako la GRAD na anwani ambapo unataka kupokea mapato. Kutoa pesa kutapatikana baadaye.", balance_avail: "Salio linalopatikana", addr_now: "Anwani ya sasa", wallet_ph: "Bandika anwani ya pochi yako", wallet_ph2: "Bandika au hariri anwani yako", save_addr: "Hifadhi anwani", wallet_hint: "Kuongeza pochi yako pia kunakupa GRAD 200 kupitia kazi husika.", tab_profile: "Wasifu", balance_kv: "Salio", mines_done: "Uchimbaji uliofanywa", referred: "Marafiki waliokualikwa", member_since: "Mwanachama tangu", leaderboard: "Ubao wa viongozi", settings: "Mipangilio ya akaunti", display_name: "Jina la kuonyesha", name_ph: "Jina lako (herufi 24 kiwango cha juu)", save_name: "Hifadhi jina", prefs: "Mapendeleo", language: "Lugha", language_desc: "Lugha ya kiolesura", notifications: "Arifa", notif_desc: "Vikumbusho mchimbaji wako akiwa tayari", danger: "Eneo hatari", reset_btn: "Weka upya akaunti yangu", reset_confirm: "Hii ni ya kudumu: salio lako la GRAD na uchimbaji vitarudi sifuri. Thibitisha?", cancel: "Ghairi", reset_yes: "Ndiyo, weka upya", busy: "Inachimba...", btn_mine: "Chimba", in_progress: "Uchimbaji unaendelea...", ready: "Tayari kuchimba: +{n} {cur}", next_in: "Uchimbaji ujao baada ya {t}", claimed: "Imedaiwa", open: "Fungua", claim: "Dai", no_refs: "Hakuna rufaa bado. Shiriki kiungo chako!", share_text: "Jiunge nami kwenye GRADE upate GRAD pamoja!", no_addr: "Hakuna anwani iliyohifadhiwa", lang_saved: "Lugha imehifadhiwa", invite_desc: "Alika marafiki kwa kiungo chako. Unapata GRAD {b} kwa kila rafiki anayejisajili, na rafiki yako anapata GRAD {w}." },
+  zh: { balance_label: "你的余额", per_mine: "每次挖矿收益", per_hour: "每小时一次", rank: "排名", mines: "挖矿", friends: "好友", tasks_desc: "完成任务可赚取额外 GRAD。每个任务只能领取一次。", tab_tasks: "任务", tab_mine: "挖矿", ref_label: "你的推荐链接", copy: "复制", share: "分享", gains_ref: "推荐收益", your_refs: "你的推荐", tab_wallet: "钱包", wallet_desc: "你的 GRAD 余额，以及你希望接收收益的地址。提现功能稍后开放。", balance_avail: "可用余额", addr_now: "当前地址", wallet_ph: "粘贴你的钱包地址", wallet_ph2: "粘贴或修改你的地址", save_addr: "保存地址", wallet_hint: "添加钱包还可通过对应任务获得 200 GRAD。", tab_profile: "个人", balance_kv: "余额", mines_done: "已完成挖矿", referred: "已邀请好友", member_since: "注册时间", leaderboard: "排行榜", settings: "账户设置", display_name: "显示名称", name_ph: "你的昵称（最多24个字符）", save_name: "保存昵称", prefs: "偏好设置", language: "语言", language_desc: "界面语言", notifications: "通知", notif_desc: "挖矿就绪时提醒", danger: "危险区", reset_btn: "重置我的账户", reset_confirm: "此操作不可恢复：你的 GRAD 余额和挖矿记录将归零。确认？", cancel: "取消", reset_yes: "是，重置", busy: "挖矿中...", btn_mine: "挖矿", in_progress: "挖矿进行中...", ready: "可以挖矿：+{n} {cur}", next_in: "下次挖矿：{t} 后", claimed: "已领取", open: "打开", claim: "领取", no_refs: "暂无推荐。分享你的链接吧！", share_text: "来 GRADE 和我一起赚 GRAD 吧！", no_addr: "未保存地址", lang_saved: "语言已保存", invite_desc: "用你的链接邀请好友。每位注册好友你得 {b} GRAD，你的好友得 {w} GRAD。" },
+  hi: { balance_label: "आपका बैलेंस", per_mine: "प्रति माइनिंग इनाम", per_hour: "प्रति घंटा एक माइनिंग", rank: "रैंक", mines: "माइनिंग", friends: "दोस्त", tasks_desc: "बोनस GRAD कमाने के लिए कार्य पूरे करें। हर कार्य एक बार ही क्लेम किया जा सकता है।", tab_tasks: "कार्य", tab_mine: "माइन करें", ref_label: "आपका रेफ़रल लिंक", copy: "कॉपी", share: "शेयर", gains_ref: "रेफ़रल कमाई", your_refs: "आपके रेफ़रल", tab_wallet: "वॉलेट", wallet_desc: "आपका GRAD बैलेंस और वह पता जहाँ आप कमाई पाना चाहते हैं। निकासी बाद में उपलब्ध होगी।", balance_avail: "उपलब्ध बैलेंस", addr_now: "वर्तमान पता", wallet_ph: "अपना वॉलेट पता पेस्ट करें", wallet_ph2: "अपना पता पेस्ट या बदलें", save_addr: "पता सहेजें", wallet_hint: "वॉलेट जोड़ने पर संबंधित कार्य से 200 GRAD भी मिलते हैं।", tab_profile: "प्रोफ़ाइल", balance_kv: "बैलेंस", mines_done: "किए गए माइनिंग", referred: "रेफ़र किए दोस्त", member_since: "सदस्य से", leaderboard: "लीडरबोर्ड", settings: "खाता सेटिंग्स", display_name: "प्रदर्शित नाम", name_ph: "आपका नाम (अधिकतम 24 अक्षर)", save_name: "नाम सहेजें", prefs: "प्राथमिकताएँ", language: "भाषा", language_desc: "इंटरफ़ेस भाषा", notifications: "सूचनाएँ", notif_desc: "माइनिंग तैयार होने पर याद दिलाएं", danger: "खतरा क्षेत्र", reset_btn: "मेरा खाता रीसेट करें", reset_confirm: "यह स्थायी है: आपका GRAD बैलेंस और माइनिंग शून्य हो जाएँगे। पुष्टि करें?", cancel: "रद्द करें", reset_yes: "हाँ, रीसेट करें", busy: "माइनिंग...", btn_mine: "माइन करें", in_progress: "माइनिंग जारी...", ready: "माइन करने के लिए तैयार: +{n} {cur}", next_in: "अगला माइनिंग {t} में", claimed: "दावा किया गया", open: "खोलें", claim: "दावा करें", no_refs: "अभी कोई रेफ़रल नहीं। अपना लिंक शेयर करें!", share_text: "GRADE पर मेरे साथ जुड़ें और साथ में GRAD कमाएँ!", no_addr: "कोई पता सहेजा नहीं", lang_saved: "भाषा सहेजी गई", invite_desc: "अपने लिंक से दोस्तों को आमंत्रित करें। हर साइन-अप पर आपको {b} GRAD मिलेंगे, और आपके दोस्त को {w} GRAD।" },
+  ru: { balance_label: "Ваш баланс", per_mine: "Награда за добычу", per_hour: "одна добыча в час", rank: "Место", mines: "Добыча", friends: "Друзья", tasks_desc: "Выполняйте задания, чтобы получать бонусные GRAD. Каждое задание можно получить один раз.", tab_tasks: "Задания", tab_mine: "Добыча", ref_label: "Ваша реферальная ссылка", copy: "Копировать", share: "Поделиться", gains_ref: "Доход от рефералов", your_refs: "Твои рефералы", tab_wallet: "Кошелёк", wallet_desc: "Ваш баланс GRAD и адрес, на который хотите получать доход. Вывод средств будет доступен позже.", balance_avail: "Доступный баланс", addr_now: "Текущий адрес", wallet_ph: "Вставьте адрес кошелька", wallet_ph2: "Вставьте или измените адрес", save_addr: "Сохранить адрес", wallet_hint: "Добавление кошелька также даёт 200 GRAD за соответствующее задание.", tab_profile: "Профиль", balance_kv: "Баланс", mines_done: "Выполнено добыч", referred: "Приглашённые друзья", member_since: "Участник с", leaderboard: "Рейтинг", settings: "Настройки аккаунта", display_name: "Отображаемое имя", name_ph: "Ваше имя (макс. 24 символа)", save_name: "Сохранить имя", prefs: "Настройки", language: "Язык", language_desc: "Язык интерфейса", notifications: "Уведомления", notif_desc: "Напоминания, когда добыча готова", danger: "Опасная зона", reset_btn: "Сбросить мой аккаунт", reset_confirm: "Это необратимо: баланс GRAD и добыча обнулятся. Подтвердить?", cancel: "Отмена", reset_yes: "Да, сбросить", busy: "Добыча...", btn_mine: "Добыть", in_progress: "Добыча идёт...", ready: "Готово к добыче: +{n} {cur}", next_in: "Следующая добыча через {t}", claimed: "Получено", open: "Открыть", claim: "Получить", no_refs: "Пока нет рефералов. Поделитесь ссылкой!", share_text: "Присоединяйся к GRADE и зарабатывай GRAD вместе со мной!", no_addr: "Адрес не сохранён", lang_saved: "Язык сохранён", invite_desc: "Приглашайте друзей по своей ссылке. Вы получаете {b} GRAD за каждого зарегистрировавшегося друга, а ваш друг получает {w} GRAD." },
+  de: { balance_label: "Dein Guthaben", per_mine: "Gewinn pro Mining", per_hour: "ein Mining pro Stunde", rank: "Rang", mines: "Minings", friends: "Freunde", tasks_desc: "Erledige Aufgaben, um Bonus-GRAD zu verdienen. Jede Aufgabe kann nur einmal abgeholt werden.", tab_tasks: "Aufgaben", tab_mine: "Minen", ref_label: "Dein Empfehlungslink", copy: "Kopieren", share: "Teilen", gains_ref: "Empfehlungs-Gewinn", your_refs: "Deine Empfehlungen", tab_wallet: "Wallet", wallet_desc: "Dein GRAD-Guthaben und die Adresse, an die du deine Gewinne erhalten möchtest. Auszahlungen folgen später.", balance_avail: "Verfügbares Guthaben", addr_now: "Aktuelle Adresse", wallet_ph: "Wallet-Adresse einfügen", wallet_ph2: "Adresse einfügen oder ändern", save_addr: "Adresse speichern", wallet_hint: "Dein Wallet hinzuzufügen bringt dir über die passende Aufgabe auch 200 GRAD.", tab_profile: "Profil", balance_kv: "Guthaben", mines_done: "Ausgeführte Minings", referred: "Geworbene Freunde", member_since: "Mitglied seit", leaderboard: "Rangliste", settings: "Kontoeinstellungen", display_name: "Anzeigename", name_ph: "Dein Name (max. 24 Zeichen)", save_name: "Name speichern", prefs: "Einstellungen", language: "Sprache", language_desc: "Oberflächensprache", notifications: "Benachrichtigungen", notif_desc: "Erinnerungen, wenn dein Mining bereit ist", danger: "Gefahrenzone", reset_btn: "Mein Konto zurücksetzen", reset_confirm: "Das ist endgültig: dein GRAD-Guthaben und deine Minings werden auf null gesetzt. Bestätigen?", cancel: "Abbrechen", reset_yes: "Ja, zurücksetzen", busy: "Mining...", btn_mine: "Minen", in_progress: "Mining läuft...", ready: "Bereit zum Minen: +{n} {cur}", next_in: "Nächstes Mining in {t}", claimed: "Abgeholt", open: "Öffnen", claim: "Abholen", no_refs: "Noch keine Empfehlungen. Teile deinen Link!", share_text: "Komm zu GRADE und verdiene zusammen mit mir GRAD!", no_addr: "Keine Adresse gespeichert", lang_saved: "Sprache gespeichert", invite_desc: "Lade Freunde mit deinem Link ein. Du erhältst {b} GRAD für jeden Freund, der sich anmeldet, und dein Freund erhält {w} GRAD." }
+};
+
+let LANG = "fr";
+function tr(k, v) {
+  let s = (I18N[LANG] && I18N[LANG][k]) || I18N.fr[k] || k;
+  if (v) for (const x in v) s = s.split("{" + x + "}").join(v[x]);
+  return s;
+}
+function taskTitle(t) { return t.title; }
+function setLang(code) {
+  LANG = I18N[code] ? code : "fr";
+  document.documentElement.lang = LANG;
+  document.documentElement.dir = LANG === "ar" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => { el.placeholder = tr(el.dataset.i18nPh); });
+  const sel = document.getElementById("setLang");
+  if (sel) sel.value = LANG;
+  renderFriendsDesc();
+}
+function fillLangSelect() {
+  const sel = document.getElementById("setLang");
+  sel.innerHTML = Object.keys(LANG_NAMES).map((c) => '<option value="' + c + '">' + LANG_NAMES[c] + "</option>").join("");
+}
+function renderFriendsDesc() {
+  const el = document.getElementById("frDesc");
+  if (!el) return;
+  const b = (S.me && S.me.referral_bonus) || 500;
+  const w = (S.me && S.me.referred_welcome) || 250;
+  el.innerHTML = tr("invite_desc", {
+    b: '<b id="bonusTxt" style="color:var(--gold)">' + fmt(b) + "</b>",
+    w: '<b id="welcomeTxt" style="color:var(--gold)">' + fmt(w) + "</b>",
+  });
+}
+
 /* ---------- Temps et compte a rebours ---------- */
 function serverNow() { return Date.now() / 1000 + S.offset; }
 function remaining() {
   if (!S.nextAt) return 0;
   return Math.max(0, S.nextAt - serverNow());
 }
-// Format "Xh Ym" (arrondi a la minute superieure).
+// Format "Xh Ym" (au-dessus d'une heure) ou "Xm Ys" (en dessous). Mis a jour chaque seconde.
 function fmtDur(sec) {
-  const totalMin = Math.ceil(Math.max(0, sec) / 60);
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return h + "h " + pad2(m) + "m";
+  const total = Math.max(0, Math.ceil(sec));
+  if (total >= 3600) {
+    const hh = Math.floor(total / 3600);
+    const mm = Math.floor((total % 3600) / 60);
+    return hh + "h " + pad2(mm) + "m";
+  }
+  const mn = Math.floor(total / 60);
+  const ss = total % 60;
+  return pad2(mn) + "m " + pad2(ss) + "s";
 }
 
 function applyState(d) {
@@ -475,6 +527,7 @@ function applyState(d) {
   S.offset = (d.me.server_now || Date.now() / 1000) - Date.now() / 1000;
   S.reward = d.me.mine_reward;
   S.cur = d.me.currency;
+  setLang(d.me.lang || "fr");
   renderAll();
 }
 
@@ -496,18 +549,18 @@ function renderMine() {
   $("#stage").classList.toggle("locked", !ready);
   coin.disabled = !ready || S.busy;
   $("#btnMine").disabled = !ready || S.busy;
-  $("#btnMine").textContent = S.busy ? "Minage..." : "⛏ Miner";
+  $("#btnMine").textContent = "⛏ " + (S.busy ? tr("busy") : tr("btn_mine"));
 
   const st = $("#mineStatus");
   if (S.busy) {
     st.className = "status wait";
-    st.textContent = "Minage en cours...";
+    st.textContent = tr("in_progress");
   } else if (ready) {
     st.className = "status ok";
-    st.textContent = "Prêt à miner : +" + fmt(S.reward) + " " + S.cur;
+    st.textContent = tr("ready", { n: fmt(S.reward), cur: S.cur });
   } else {
     st.className = "status wait";
-    st.textContent = "Prochain minage dans " + fmtDur(rem);
+    st.textContent = tr("next_in", { t: fmtDur(rem) });
   }
 }
 
@@ -539,7 +592,7 @@ function spawnFloat(text) {
 async function onMine() {
   if (S.busy || !S.me) return;
   if (remaining() > 0) {
-    toast("Prochain minage dans " + fmtDur(remaining()), "bad");
+    toast(tr("next_in", { t: fmtDur(remaining()) }), "bad");
     haptic("error");
     return;
   }
@@ -566,15 +619,15 @@ function renderTasks() {
   $("#taskList").innerHTML = S.tasks.map((t) => {
     let act = "";
     if (t.claimed) {
-      act = '<span class="done-tag">✓ Réclamée</span>';
+      act = '<span class="done-tag">✓ ' + tr("claimed") + '</span>';
     } else {
-      if (t.link) act += '<button class="btn sm ghost" data-open="' + esc(t.link) + '">Ouvrir</button>';
+      if (t.link) act += '<button class="btn sm ghost" data-open="' + esc(t.link) + '">' + tr("open") + '</button>';
       const can = t.available && (t.done || t.id === "join_channel");
-      act += '<button class="btn sm" data-claim="' + esc(t.id) + '" ' + (can ? "" : "disabled") + ">Réclamer</button>";
+      act += '<button class="btn sm" data-claim="' + esc(t.id) + '" ' + (can ? "" : "disabled") + ">" + tr("claim") + "</button>";
     }
     return '<div class="card task">' +
       '<div class="task-body">' +
-        '<div class="task-title">' + esc(t.title) + '</div>' +
+        '<div class="task-title">' + esc(taskTitle(t)) + '</div>' +
         '<div class="task-prog">' + esc(t.progress) + '</div>' +
         '<div class="task-reward">+' + fmt(t.reward) + ' ' + esc(S.cur) + '</div>' +
       '</div>' +
@@ -594,6 +647,7 @@ async function claimTask(id) {
 function renderFriendsStatic() {
   if (!S.me) return;
   $("#frCount").textContent = fmt(S.me.referrals);
+  renderFriendsDesc();
   $("#frEarned").textContent = fmt(S.me.referral_earned) + " " + S.cur;
   if (S.me.ref_link) $("#refLink").value = S.me.ref_link;
 }
@@ -605,12 +659,10 @@ async function loadReferrals() {
     $("#refLink").value = d.link;
     if (S.me) S.me.ref_link = d.link;
   }
-  $("#bonusTxt").textContent = fmt(d.bonus);
-  $("#welcomeTxt").textContent = fmt(d.welcome);
   $("#frCount").textContent = fmt(d.count);
   $("#frEarned").textContent = fmt(d.earned) + " " + S.cur;
   if (!d.list.length) {
-    $("#frList").innerHTML = '<div class="empty">Aucun filleul pour le moment. Partage ton lien !</div>';
+    $("#frList").innerHTML = '<div class="empty">' + tr("no_refs") + '</div>';
   } else {
     $("#frList").innerHTML = d.list.map((f) =>
       '<div class="friend"><span>' + esc(f.name) + '</span><small>' +
@@ -639,7 +691,7 @@ function fallbackCopy(done) {
 function shareLink() {
   const link = S.me && S.me.ref_link;
   if (!link) { toast("Lien pas encore disponible.", "bad"); return; }
-  const text = "Rejoins-moi sur GRADE et gagne des GRA avec moi !";
+  const text = tr("share_text");
   const url = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent(text);
   if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
   else window.open(url, "_blank");
@@ -649,7 +701,7 @@ function shareLink() {
 function renderWallet() {
   if (!S.me) return;
   $("#walBal").textContent = fmt(S.me.balance);
-  $("#walletNow").textContent = S.me.wallet || "Aucune adresse enregistrée";
+  $("#walletNow").textContent = S.me.wallet || tr("no_addr");
 }
 
 async function saveWallet() {
@@ -674,7 +726,7 @@ function renderProfile() {
   $("#kvMines").textContent = fmt(m.mines_count);
   $("#kvRef").textContent = fmt(m.referrals);
   $("#kvSince").textContent = m.created ? new Date(m.created * 1000).toLocaleDateString("fr-FR") : "-";
-  $("#setWalletNow").textContent = m.wallet || "Aucune adresse enregistrée";
+  $("#setWalletNow").textContent = m.wallet || tr("no_addr");
   $("#swNotif").classList.toggle("on", !!m.notifications);
   $("#swNotif").setAttribute("aria-checked", m.notifications ? "true" : "false");
 }
@@ -700,6 +752,15 @@ async function toggleNotif() {
   const next = !(S.me && S.me.notifications);
   const d = await call("settings_notifications", { enabled: next });
   if (d.ok) toast(d.message, "ok"); else toast(d.error || "Réglage non enregistré.", "bad");
+  applyState(d);
+}
+
+async function saveLang() {
+  const code = $("#setLang").value;
+  setLang(code);
+  const d = await call("settings_lang", { lang: code });
+  if (d.ok) { toast(tr("lang_saved"), "ok"); haptic("success"); }
+  else { toast(d.error || "Langue non enregistrée.", "bad"); haptic("error"); }
   applyState(d);
 }
 
@@ -764,6 +825,7 @@ function bind() {
   $("#btnSetName").addEventListener("click", saveName);
   $("#btnSetWallet").addEventListener("click", saveWalletSettings);
   $("#swNotif").addEventListener("click", toggleNotif);
+  $("#setLang").addEventListener("change", saveLang);
   $("#btnReset").addEventListener("click", () => $("#resetBox").classList.toggle("hidden"));
   $("#btnResetNo").addEventListener("click", () => $("#resetBox").classList.add("hidden"));
   $("#btnResetYes").addEventListener("click", doReset);
@@ -772,6 +834,8 @@ function bind() {
 
 /* ---------- Demarrage ---------- */
 async function init() {
+  fillLangSelect();
+  setLang("fr");
   bind();
   renderAll();
   const d = await call("me");
