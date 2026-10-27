@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import json
 import logging
+import math
 import os
 import sqlite3
 import time
@@ -103,6 +104,11 @@ def migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN notifications INTEGER NOT NULL DEFAULT 1")
     if "lang" not in cols:
         conn.execute("ALTER TABLE users ADD COLUMN lang TEXT NOT NULL DEFAULT 'fr'")
+    if "mine_credited" not in cols:
+        # GRAD du cycle deja verse au solde. Les anciens minages (version instantanee)
+        # etaient entierement credites: on marque 1000 pour ne rien recréditer.
+        conn.execute("ALTER TABLE users ADD COLUMN mine_credited INTEGER NOT NULL DEFAULT 0")
+        conn.execute("UPDATE users SET mine_credited = ? WHERE last_mine_at IS NOT NULL", (MINE_REWARD,))
     conn.commit()
 
 
@@ -120,6 +126,40 @@ DB = open_db()
 
 def db_get_user(uid: int):
     return DB.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
+
+
+def cycle_accrued(last_mine_at, now: float) -> int:
+    """GRAD total du cycle en cours a l'instant now: floor(1000 * temps ecoule / 24 h), plafonne a 1000."""
+    if last_mine_at is None:
+        return 0
+    elapsed = min(max(now - last_mine_at, 0.0), MINE_COOLDOWN)
+    return math.floor(MINE_REWARD * elapsed / MINE_COOLDOWN)
+
+
+def settle_user(uid: int) -> None:
+    """Verse au solde le GRAD accumule depuis la derniere lecture (sans jamais crediter deux fois)."""
+    now = time.time()
+    row = DB.execute("SELECT last_mine_at, mine_credited FROM users WHERE id = ?", (uid,)).fetchone()
+    if not row or row["last_mine_at"] is None:
+        return
+    acc = cycle_accrued(row["last_mine_at"], now)
+    if acc <= row["mine_credited"]:
+        return
+    # CAS: ne met a jour que si personne n'a deja credite cette tranche
+    DB.execute(
+        "UPDATE users SET balance = balance + ?, mine_credited = ? WHERE id = ? AND mine_credited = ?",
+        (acc - row["mine_credited"], acc, uid, row["mine_credited"]),
+    )
+    DB.commit()
+
+
+def settle_all() -> None:
+    """Met a jour tous les cycles en cours (utile avant le classement)."""
+    rows = DB.execute(
+        "SELECT id FROM users WHERE last_mine_at IS NOT NULL AND mine_credited < ?", (MINE_REWARD,)
+    ).fetchall()
+    for r in rows:
+        settle_user(r["id"])
 
 
 def db_ensure_user(uid: int, username, first_name, ref_id=None):
@@ -196,6 +236,7 @@ def task_status(task: dict, row, refs: int):
 
 
 def build_state(uid: int) -> dict:
+    settle_user(uid)
     row = db_get_user(uid)
     now = time.time()
     refs = db_count_referrals(uid)
@@ -205,6 +246,9 @@ def build_state(uid: int) -> dict:
     # 0 = jamais mine (minage possible tout de suite)
     next_mine_at = (row["last_mine_at"] + MINE_COOLDOWN) if row["last_mine_at"] else 0
     can_mine = now >= next_mine_at
+    # GRAD du cycle deja credite au solde, et GRAD encore en cours d'accumulation
+    cycle_credited = int(row["mine_credited"] or 0) if row["last_mine_at"] else 0
+    cycle_pending = cycle_accrued(row["last_mine_at"], now) if row["last_mine_at"] else 0
 
     me = {
         "id": uid,
@@ -228,6 +272,9 @@ def build_state(uid: int) -> dict:
         "mine_reward": MINE_REWARD,
         "mine_cooldown_s": MINE_COOLDOWN,
         "can_mine": can_mine,
+        "cycle_credited": cycle_credited,
+        "cycle_accrued": cycle_pending,
+        "cycle_start": float(row["last_mine_at"] or 0),
         "next_mine_at": int(next_mine_at),
         "seconds_left": 0 if can_mine else int(next_mine_at - now) + 1,
         "server_now": now,
@@ -294,21 +341,23 @@ async def act_me(uid, body, request):
 
 
 async def act_mine(uid, body, request):
-    """Minage: une fois par 24 h. La verification et la mise a jour sont
-    faites en une seule requete SQL (pas de course possible entre deux clics)."""
+    """Demarre un cycle de minage (une fois par 24 h). Le GRAD du cycle s'accumule
+    ensuite en continu: floor(1000 * temps ecoule / 24 h), verse au solde a chaque lecture.
+    La verification et le demarrage sont une seule requete SQL (pas de course entre deux clics)."""
+    settle_user(uid)  # solde le cycle precedent (plein) avant d'en commencer un nouveau
     now = time.time()
     cur = DB.execute(
-        "UPDATE users SET balance = balance + ?, mines_count = mines_count + 1, last_mine_at = ?"
+        "UPDATE users SET mines_count = mines_count + 1, last_mine_at = ?, mine_credited = 0"
         " WHERE id = ? AND (last_mine_at IS NULL OR last_mine_at <= ?)",
-        (MINE_REWARD, now, uid, now - MINE_COOLDOWN),
+        (now, uid, now - MINE_COOLDOWN),
     )
     DB.commit()
     if cur.rowcount != 1:
         row = db_get_user(uid)
         left = (row["last_mine_at"] + MINE_COOLDOWN) - now
         raise ApiError(f"Minage pas encore disponible. Prochain minage dans {fmt_duration(left)}.")
-    return {"ok": True, "gained": MINE_REWARD,
-            "message": f"+{MINE_REWARD} {CURRENCY} minés !", **build_state(uid)}
+    return {"ok": True, "gained": 0,
+            "message": f"Minage lancé : +{MINE_REWARD} {CURRENCY} sur 24 h.", **build_state(uid)}
 
 
 async def act_task_claim(uid, body, request):
@@ -348,6 +397,7 @@ async def act_task_claim(uid, body, request):
 
 
 async def act_leaderboard(uid, body, request):
+    settle_all()
     rows = DB.execute(
         "SELECT * FROM users ORDER BY balance DESC, id ASC LIMIT 10"
     ).fetchall()
@@ -421,7 +471,7 @@ async def act_settings_reset(uid, body, request):
     """Remet solde, minages et tâches reclamees a zero. Amis, portefeuille et pseudo sont conserves."""
     if str(body.get("confirm", "")).strip().upper() != "RESET":
         raise ApiError("Confirmation manquante : tape RESET pour réinitialiser.")
-    DB.execute("UPDATE users SET balance = 0, mines_count = 0, last_mine_at = NULL WHERE id = ?", (uid,))
+    DB.execute("UPDATE users SET balance = 0, mines_count = 0, last_mine_at = NULL, mine_credited = 0 WHERE id = ?", (uid,))
     DB.execute("DELETE FROM user_tasks WHERE user_id = ?", (uid,))
     DB.commit()
     return {"ok": True, "message": "Compte réinitialisé : solde et minages remis à zéro.", **build_state(uid)}

@@ -28,6 +28,8 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
 .balance{text-align:center;margin:8px 0 6px}
 .bal-lbl{font-size:12px;color:var(--mut);letter-spacing:.14em;text-transform:uppercase}
 .bal-big{font-size:52px;font-weight:800;line-height:1.05;margin-top:4px;background:linear-gradient(90deg,var(--blue),#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bal-big.tick{animation:tickPulse .35s ease-out}
+@keyframes tickPulse{0%{transform:scale(1.04)}100%{transform:scale(1)}}
 .bal-unit{font-size:16px;color:var(--gold);font-weight:700;letter-spacing:.1em}
 .mine-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 6px}
 .daily{width:78px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:10px 6px;text-align:center;cursor:pointer;transition:transform .2s,border-color .3s;flex:none;color:var(--txt)}
@@ -537,6 +539,17 @@ function renderFriendsDesc() {
 
 /* ---------- Temps et compte a rebours ---------- */
 function serverNow() { return Date.now() / 1000 + S.offset; }
+// Solde en direct: le serveur donne le solde verse et le debut du cycle; le client
+// ne fait qu'extrapoler le GRAD du cycle entre deux synchros (recalé a chaque reponse serveur).
+function liveBalance() {
+  if (!S.me) return 0;
+  const cs = S.me.cycle_start || 0;
+  if (!cs) return S.me.balance;
+  const elapsed = Math.min(Math.max(serverNow() - cs, 0), S.me.mine_cooldown_s);
+  const accrued = Math.floor(S.me.mine_reward * elapsed / S.me.mine_cooldown_s);
+  const credited = S.me.cycle_credited || 0;
+  return S.me.balance + Math.max(0, accrued - credited);
+}
 function remaining() {
   if (!S.nextAt) return 0;
   return Math.max(0, S.nextAt - serverNow());
@@ -579,7 +592,7 @@ function renderMine() {
   if (!S.me) return;
   const rem = remaining();
   const ready = rem <= 0;
-  const bal = Math.floor(S.me.balance);
+  const bal = Math.floor(liveBalance());
   $("#balMain").textContent = fmt(bal);
   $("#hdrBal").textContent = fmt(bal);
   $("#rankTxt").textContent = "#" + fmt(S.me.rank);
@@ -587,6 +600,9 @@ function renderMine() {
   $("#refTxt").textContent = fmt(S.me.referrals);
   $("#rewardTxt").textContent = fmt(S.reward);
   $("#cycleTxt").textContent = ready ? "Prêt à miner" : "+" + fmt(S.reward) + " GRAD / cycle";
+  const gained = Math.max(0, bal - (S.lastShown || 0));
+  if (gained > 0) { const b = $("#balMain"); b.classList.remove("tick"); void b.offsetWidth; b.classList.add("tick"); }
+  S.lastShown = bal;
   $("#cycleCard").classList.toggle("ready", ready);
 
   const total = 86400;
@@ -647,7 +663,7 @@ async function onMine() {
   const d = await call("mine");
   S.busy = false;
   if (d.ok) {
-    spawnFloat("+" + fmt(d.gained) + " " + S.cur);
+    spawnFloat("⛏ " + S.cur);
     toast(d.message || "Minage réussi !", "ok");
     haptic("success");
   } else {
@@ -751,7 +767,7 @@ function shareLink() {
 /* ---------- Portefeuille ---------- */
 function renderWallet() {
   if (!S.me) return;
-  $("#walBal").textContent = fmt(S.me.balance);
+  $("#walBal").textContent = fmt(liveBalance());
   $("#walletNow").textContent = S.me.wallet || tr("no_addr");
 }
 
@@ -772,7 +788,7 @@ function renderProfile() {
   $("#avatar").textContent = name.trim().charAt(0).toUpperCase() || "M";
   $("#pName").textContent = name;
   $("#pMeta").textContent = (m.username ? "@" + m.username : "Sans pseudo") + " · ID " + m.id;
-  $("#kvBal").textContent = fmt(m.balance) + " " + S.cur;
+  $("#kvBal").textContent = fmt(liveBalance()) + " " + S.cur;
   $("#kvRank").textContent = "#" + fmt(m.rank);
   $("#kvMines").textContent = fmt(m.mines_count);
   $("#kvRef").textContent = fmt(m.referrals);
