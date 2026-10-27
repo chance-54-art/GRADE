@@ -7,235 +7,129 @@
 <title>GRADE</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{
-  --bg:#0b0b1a; --panel:#13132a; --panel2:#1b1b36;
-  --gold:#f5c542; --gold2:#c98f1a; --gold3:#7a4e0a;
-  --text:#f4f1e6; --muted:#9a98b5; --ok:#42d392; --bad:#ff5c6c;
-  --line:rgba(245,197,66,.20);
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{
-  background:radial-gradient(circle at 50% -15%,#262052 0,var(--bg) 58%) fixed,var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  overflow-x:hidden;user-select:none;-webkit-user-select:none;
-}
-button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
-button:disabled{opacity:.45;cursor:not-allowed}
-
-/* En-tete */
-.top{
-  position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
-  padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;
-  background:linear-gradient(180deg,#14143a,#0b0b1ae6);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
-  box-shadow:0 8px 24px rgba(0,0,0,.35);
-}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:3px;font-size:18px;
-  background:linear-gradient(90deg,#fff3b0,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.logo{
-  width:34px;height:34px;border-radius:50%;display:block;object-fit:cover;
-  box-shadow:0 0 14px rgba(245,197,66,.5);
-}
-.coin-img{
-  position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;z-index:0;pointer-events:none;
-}
-.hdr-bal{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;font-weight:900;font-size:18px;color:#fff3c4;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,rgba(245,197,66,.22),rgba(122,78,10,.35));border:1px solid rgba(245,197,66,.55);box-shadow:0 0 18px rgba(245,197,66,.22),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .2s}
-.hdr-bal.bump{transform:scale(1.07)}
-.hdr-bal small{font-size:11px;color:var(--muted);font-weight:700;margin-left:2px}
-
-/* Structure */
-main{padding:14px 14px 116px;max-width:520px;margin:0 auto}
-.screen{display:none;animation:fade .35s cubic-bezier(.2,.8,.2,1)}
+:root{--bg:#05060d;--card:rgba(20,26,48,.72);--line:rgba(120,170,255,.18);--blue:#7fd3ff;--gold:#f5c542;--txt:#eef3ff;--mut:#8fa0c8}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+body{background:radial-gradient(1px 1px at 20% 30%,#fff8,transparent),radial-gradient(1px 1px at 70% 60%,#9cf8,transparent),radial-gradient(1.5px 1.5px at 40% 80%,#fff6,transparent),radial-gradient(1px 1px at 85% 15%,#ffe9a8aa,transparent),linear-gradient(180deg,#05060d,#0a0f22 60%,#05060d);background-attachment:fixed}
+.hidden{display:none!important}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;gap:10px}
+.who{display:flex;align-items:center;gap:10px;min-width:0}
+.avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06070f;flex:none}
+.who-txt{min-width:0}
+.who-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.who-id{font-size:11px;color:var(--mut)}
+.wallet-badge{border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;letter-spacing:.06em;background:rgba(245,197,66,.08);cursor:pointer;transition:transform .2s,box-shadow .2s;flex:none}
+.wallet-badge:active{transform:scale(.96)}
+.wallet-badge:hover{box-shadow:0 0 12px rgba(245,197,66,.35)}
+main{padding:0 16px 96px;max-width:520px;margin:0 auto}
+.screen{display:none;animation:fade .35s ease}
 .screen.active{display:block}
-@keyframes fade{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
-.title{font-size:22px;font-weight:800;margin:4px 2px 4px}
-.title span{color:var(--gold)}
-.muted{color:var(--muted);font-size:13px;line-height:1.45;margin:0 2px 14px}
-.card{
-  background:linear-gradient(160deg,var(--panel2),var(--panel));
-  border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:12px;
-  box-shadow:0 14px 32px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.05);
-  transition:transform .2s ease,box-shadow .2s ease;
-}
-.lbl{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
-.big{font-size:38px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums;
-  background:linear-gradient(90deg,#fff3b0,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
-.big .unit{font-size:16px;-webkit-text-fill-color:var(--muted);color:var(--muted);font-weight:700}
-.sub{color:var(--muted);font-size:13px;margin-top:6px}
-.sub b{color:var(--gold)}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;font-weight:600}
-
-/* Bouton principal */
-.btn{transition:transform .12s ease,box-shadow .2s ease,filter .2s ease;
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  padding:12px 16px;border-radius:14px;font-weight:800;font-size:14px;
-  background:linear-gradient(180deg,#ffe07a,var(--gold) 50%,var(--gold2));color:#2a1a00;
-  box-shadow:0 6px 0 var(--gold3),0 10px 22px rgba(245,197,66,.25),inset 0 1px 0 rgba(255,255,255,.45);transition:transform .1s,box-shadow .15s,filter .15s;
-}
-.btn:not(:disabled):active{box-shadow:0 2px 0 var(--gold3),0 4px 10px rgba(245,197,66,.2)}
-.btn:active{transform:scale(.97)}
-.btn:not(:disabled):active{transform:scale(.97)}
-.btn.ghost{background:rgba(245,197,66,.08);color:var(--gold);border:1px solid var(--line);box-shadow:none}
-.btn.ghost:not(:disabled):active{box-shadow:none;background:rgba(245,197,66,.16)}
-.btn.full{width:100%}
-.btn.sm{padding:9px 12px;font-size:13px;border-radius:12px}
-.btn.big-btn{padding:16px;font-size:18px;border-radius:20px;margin-top:6px}
-
-/* Minage */
-.mine-stage{
-  position:relative;display:grid;place-items:center;margin:10px auto 4px;
-  width:min(72vw,280px);aspect-ratio:1;
-}
-.halo{
-  position:absolute;inset:-8%;border-radius:50%;
-  background:radial-gradient(circle,rgba(245,197,66,.30),transparent 65%);
-  animation:halo 3s ease-in-out infinite;pointer-events:none;
-}
-.mine-stage.locked .halo{opacity:.15;animation:none}
-@keyframes halo{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
-.coin{
-  position:relative;width:100%;height:100%;border-radius:50%;display:grid;place-items:center;
-  background:radial-gradient(circle at 32% 26%,#fff8d2 0,#ffe07a 16%,var(--gold) 38%,var(--gold2) 72%,var(--gold3) 100%);
-  box-shadow:0 0 50px rgba(245,197,66,.45),inset 0 -12px 26px rgba(90,50,0,.45),inset 0 6px 14px rgba(255,255,255,.35);
-  transition:transform .12s cubic-bezier(.2,.8,.2,1),filter .3s;
-  will-change:transform;touch-action:manipulation;
-}
-.coin:not(:disabled):active{transform:scale(.93)}
-.coin::before{content:"";position:absolute;inset:8%;border-radius:50%;border:2px dashed rgba(90,50,0,.45)}
-.coin::after{
-  content:"";position:absolute;inset:0;border-radius:50%;
-  background:linear-gradient(120deg,transparent 35%,rgba(255,255,255,.35) 48%,transparent 60%);
-  transform:translateX(-60%);animation:shine 4.5s ease-in-out infinite;
-}
-@keyframes shine{0%,55%{transform:translateX(-60%)}100%{transform:translateX(60%)}}
-.coin.locked{filter:brightness(.72) saturate(.85);box-shadow:0 0 30px rgba(0,0,0,.35),inset 0 -12px 26px rgba(0,0,0,.35)}
-.coin-veil{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(11,11,26,0) 40%,rgba(11,11,26,.55) 100%);opacity:0;transition:opacity .4s;z-index:0;pointer-events:none}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.balance{text-align:center;margin:8px 0 6px}
+.bal-lbl{font-size:12px;color:var(--mut);letter-spacing:.14em;text-transform:uppercase}
+.bal-big{font-size:52px;font-weight:800;line-height:1.05;margin-top:4px;background:linear-gradient(90deg,var(--blue),#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bal-unit{font-size:16px;color:var(--gold);font-weight:700;letter-spacing:.1em}
+.mine-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 6px}
+.daily{width:78px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:10px 6px;text-align:center;cursor:pointer;transition:transform .2s,border-color .3s;flex:none;color:var(--txt)}
+.daily:hover{border-color:var(--gold)}
+.daily:active{transform:scale(.96)}
+.daily .gift{font-size:24px;display:block}
+.daily small{display:block;font-size:10px;color:var(--mut);margin-top:4px;line-height:1.2}
+.stage{position:relative;width:200px;height:200px;flex:none}
+.halo{position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(127,211,255,.35),transparent 65%);animation:pulse 3s ease-in-out infinite;pointer-events:none}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+.coin{position:relative;width:200px;height:200px;border-radius:50%;border:0;padding:0;background:transparent;cursor:pointer;transition:transform .2s;display:block}
+.coin:active{transform:scale(.96)}
+.coin-img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;box-shadow:0 0 30px rgba(245,197,66,.35);transition:filter .6s ease,box-shadow .6s ease}
+.coin-veil{position:absolute;inset:0;border-radius:50%;background:rgba(5,6,13,.55);transition:opacity .6s ease;pointer-events:none}
+.coin-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.coin-ico{font-size:34px}
+.coin-timer{font-size:18px;font-weight:800;color:#fff;text-shadow:0 2px 8px #000;margin-top:4px}
+.coin.locked .coin-img{filter:grayscale(.35) brightness(.75)}
+.coin:not(.locked) .coin-veil{opacity:0}
 .coin.locked .coin-veil{opacity:1}
-.coin-timer{display:none;font-size:20px;font-weight:900;color:#fff8d2;text-shadow:0 2px 8px rgba(0,0,0,.8);margin-top:6px;font-variant-numeric:tabular-nums}
+.coin.locked .coin-inner .coin-ico,.coin.locked .coin-inner .coin-mnx{display:none}
 .coin.locked .coin-timer{display:block}
-.coin.locked .coin-ico,.coin.locked .coin-mnx{opacity:.35}
-.coin.locked::after{animation:none;opacity:0}
-.coin.bump{animation:bump .25s ease}
-@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.05)}100%{transform:scale(1)}}
-.coin-inner{position:relative;z-index:1;text-align:center;color:#3a2300;text-shadow:0 1px 0 rgba(255,255,255,.35)}
-.coin-ico{display:block;font-size:46px;line-height:1}
-.coin-mnx{display:block;font-size:26px;font-weight:900;letter-spacing:3px;margin-top:4px}
-.float{
-  position:absolute;pointer-events:none;font-weight:900;font-size:26px;color:var(--gold);z-index:5;
-  text-shadow:0 0 12px rgba(245,197,66,.9),0 2px 0 #3a2300;transform:translate(-50%,-50%);
-  animation:floatUp 1.1s ease-out forwards;white-space:nowrap;
-}
-@keyframes floatUp{0%{opacity:1;margin-top:0}100%{opacity:0;margin-top:-120px}}
-.spark{
-  position:absolute;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:4;
-  background:radial-gradient(circle,#fff6c8,var(--gold));box-shadow:0 0 8px var(--gold);
-  animation:spark .7s ease-out forwards;
-}
-@keyframes spark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
-
-.status{text-align:center;font-size:22px;font-weight:900;margin:14px 0 6px;letter-spacing:.5px;color:var(--gold);font-variant-numeric:tabular-nums}
-.status.ok{color:var(--ok)}
-.status.wait{color:var(--muted)}
-
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px 8px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.3)}
-.stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px}
-.stat b{display:block;margin-top:4px;font-size:17px;font-variant-numeric:tabular-nums}
-
-/* Taches */
-.task{display:flex;align-items:center;gap:12px}
-.task-body{flex:1;min-width:0}
-.task-title{font-weight:700;font-size:15px}
-.task-prog{color:var(--muted);font-size:12.5px;margin-top:3px}
-.task-reward{color:var(--gold);font-weight:800;font-size:13px;margin-top:4px}
-.task-act{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
-.done-tag{color:var(--ok);font-weight:800;font-size:13px}
-
-/* Classement */
-.lb-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--panel);
-  border:1px solid rgba(255,255,255,.05);margin-bottom:8px}
-.lb-row.me{border-color:var(--gold);background:linear-gradient(90deg,rgba(245,197,66,.16),var(--panel))}
-.lb-rank{width:34px;text-align:center;font-weight:900;font-size:16px;color:var(--muted)}
-.lb-name{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lb-bal{font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
-
-/* Amis */
-.link-box{display:flex;gap:8px;margin-top:10px}
-.link-box input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:12px;color:var(--text);
-  padding:12px;font-size:13px;user-select:all;-webkit-user-select:all}
-.friend{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}
-.friend small{color:var(--muted)}
-.empty{color:var(--muted);text-align:center;padding:18px 8px;font-size:14px}
-
-/* Portefeuille & profil */
-.profile{display:flex;align-items:center;gap:14px}
-.avatar{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:900;color:#2a1a00;flex:0 0 64px;
-  background:radial-gradient(circle at 30% 25%,#fff6c8,var(--gold) 40%,var(--gold2));box-shadow:0 0 20px rgba(245,197,66,.4)}
-.pname{font-size:19px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pmeta{color:var(--muted);font-size:13px;margin-top:3px}
-.kv{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}
-.kv:last-child{border-bottom:0}
-.kv span{color:var(--muted)}
-.kv b{font-variant-numeric:tabular-nums;text-align:right}
-input.field{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px;font-size:14px;margin-top:10px;user-select:text;-webkit-user-select:text}
-input.field:focus{outline:none;border-color:var(--gold)}
-.hint{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.45}
-.addr{color:var(--text);word-break:break-all;font-size:13px;margin-top:6px}
-
-/* Reglages du compte */
-.set-title{font-size:15px;font-weight:800;color:var(--gold);margin:4px 2px 10px;letter-spacing:.5px}
-.set-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)}
-.set-row:last-child{border-bottom:0}
-.set-row .k{font-size:14px;font-weight:700}
-.set-row .k small{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:2px}
-.switch{position:relative;width:52px;height:30px;border-radius:30px;background:#2a2a48;border:1px solid var(--line);flex:0 0 52px;transition:background .2s}
-.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#cfcbe6;transition:transform .2s}
-.switch.on{background:linear-gradient(90deg,var(--gold2),var(--gold))}
-.switch.on::after{transform:translateX(22px);background:#2a1a00}
-.btn.danger{border:1px solid rgba(255,92,108,.5);color:#ff9aa5;background:rgba(255,92,108,.08);box-shadow:none}
-.confirm-box{margin-top:10px;padding:12px;border-radius:14px;border:1px solid rgba(255,92,108,.5);background:rgba(255,92,108,.08)}
-.confirm-box p{font-size:13px;line-height:1.45;color:#ffd0d6;margin-bottom:10px}
-.confirm-box .row-btn{display:flex;gap:8px}
-.confirm-box .row-btn button{flex:1}
-
-/* Navigation basse */
-nav.bottom{
-  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 8px);z-index:30;display:flex;justify-content:space-around;gap:2px;
-  width:min(94vw,500px);padding:6px;border-radius:24px;
-  background:linear-gradient(180deg,#1b1b3ef2,#0b0b1af2);backdrop-filter:blur(12px);border:1px solid var(--line);
-  box-shadow:0 14px 36px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);
-}
-nav.bottom button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 6px;color:var(--muted);font-size:10.5px;font-weight:700;border-radius:18px;max-width:100px;transition:background .3s ease,color .3s ease,transform .2s ease}
-nav.bottom button .ni{display:grid;place-items:center;width:38px;height:30px;border-radius:14px;font-size:19px;line-height:1;transition:background .3s ease,transform .3s ease}
-nav.bottom button:active{transform:scale(.94)}
-nav.bottom button.active{color:var(--gold)}
-nav.bottom button.active .ni{background:linear-gradient(180deg,rgba(245,197,66,.3),rgba(245,197,66,.08));box-shadow:0 0 14px rgba(245,197,66,.3);transform:translateY(-2px)}
-
-/* Toast et portail */
-#toast{
-  position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 64px);transform:translate(-50%,-12px);opacity:0;z-index:60;
-  max-width:92vw;padding:11px 16px;border-radius:14px;font-size:14px;font-weight:700;text-align:center;pointer-events:none;
-  background:var(--panel2);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.5);transition:all .25s ease;
-}
-#toast.show{opacity:1;transform:translate(-50%,0)}
-#toast.ok{border-color:rgba(66,211,146,.6);color:var(--ok)}
-#toast.bad{border-color:rgba(255,92,108,.6);color:#ffb3bb}
-.gate{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;background:rgba(11,11,26,.96)}
-.gate.hidden{display:none}
-.gate-box{max-width:360px;text-align:center}
-.gate-box .coin-mini{width:84px;height:84px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#3a2300;
-  background:radial-gradient(circle at 30% 25%,#fff6c8,var(--gold) 40%,var(--gold2) 80%,var(--gold3));box-shadow:0 0 30px rgba(245,197,66,.4)}
-.gate-box h2{font-size:20px;margin-bottom:10px}
-.gate-box p{color:var(--muted);font-size:14px;line-height:1.5}
-.loading{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
-
-.hidden{display:none !important}
-
-@media (min-width:600px){ .mine-stage{width:300px} }
-@media (max-width:360px){ .big{font-size:32px} .stats-grid{gap:6px} .stat b{font-size:15px} }
+.coin:not(.locked) .coin-timer{display:none}
+.coin-mnx{display:none}
+.coin:not(.locked) .coin-mnx{display:block;font-weight:800;color:var(--gold)}
+.big-btn{display:block;width:100%;margin:14px 0 0;padding:16px;border-radius:999px;border:0;font-size:17px;font-weight:800;color:#05060d;background:linear-gradient(90deg,var(--blue),var(--gold));cursor:pointer;transition:transform .2s,opacity .3s,box-shadow .3s;box-shadow:0 8px 24px rgba(127,211,255,.25)}
+.big-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.big-btn:not(:disabled):active{transform:scale(.98)}
+.status{text-align:center;font-size:13px;margin-top:10px;min-height:18px}
+.status.ok{color:var(--gold)}
+.status.wait{color:var(--mut)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.cc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;text-align:center;transition:border-color .4s,box-shadow .4s}
+.cc.ready{border-color:var(--gold);box-shadow:0 0 18px rgba(245,197,66,.25)}
+.cc-ico{font-size:12px;color:var(--mut);letter-spacing:.08em;text-transform:uppercase}
+.cc-val{font-size:17px;font-weight:800;margin-top:6px;color:var(--gold)}
+.cc-timer{font-size:20px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums;color:var(--blue)}
+.bar{height:4px;border-radius:4px;background:rgba(127,211,255,.12);margin-top:14px;overflow:hidden}
+.bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--gold));transition:width 1s linear}
+.mini{display:flex;justify-content:center;gap:18px;margin-top:14px;font-size:12px;color:var(--mut)}
+.mini b{color:var(--txt)}
+.title{font-size:22px;font-weight:800;margin:14px 2px 10px}
+.title span{margin-left:4px}
+.muted{color:var(--mut);font-size:13px;margin:0 2px 12px;line-height:1.4}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;transition:border-color .3s}
+.lbl{font-size:12px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.big{font-size:32px;font-weight:800}
+.unit{font-size:14px;color:var(--gold)}
+.addr{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all;color:var(--blue);margin-bottom:8px}
+.field{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:rgba(5,8,20,.8);color:var(--txt);font-size:14px;margin-top:8px;outline:none;transition:border-color .3s}
+.field:focus{border-color:var(--blue)}
+.btn{display:inline-block;padding:12px 16px;border-radius:14px;border:1px solid var(--blue);background:rgba(127,211,255,.1);color:var(--txt);font-weight:700;cursor:pointer;transition:transform .2s,background .3s}
+.btn:active{transform:scale(.97)}
+.btn.full{display:block;width:100%}
+.btn.sm{padding:8px 12px;font-size:13px}
+.btn.ghost{background:transparent;border-color:var(--line)}
+.btn.danger{border-color:#ff6b6b;color:#ffb3b3}
+.btn:disabled{opacity:.4}
+.task{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.task-body{min-width:0}
+.task-title{font-weight:700}
+.task-prog{font-size:12px;color:var(--mut);margin-top:2px}
+.task-reward{font-size:13px;color:var(--gold);font-weight:700;margin-top:4px}
+.task-act{display:flex;gap:6px;flex:none}
+.done-tag{font-size:12px;color:var(--gold);font-weight:700}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center;font-size:12px;color:var(--mut)}
+.stat b{display:block;font-size:17px;color:var(--txt);margin-top:4px}
+.link-box{display:flex;gap:8px}
+.link-box input{flex:1;min-width:0;padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(5,8,20,.8);color:var(--txt);font-size:12px}
+.lb-row{display:flex;justify-content:space-between;padding:10px 12px;border-radius:12px;margin-bottom:6px;background:var(--card);border:1px solid var(--line)}
+.lb-row.me{border-color:var(--gold)}
+.kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.set-title{font-weight:700;margin-bottom:6px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0}
+.set-row .k small{display:block;color:var(--mut);font-size:12px}
+.switch{width:46px;height:26px;border-radius:999px;border:1px solid var(--line);background:rgba(127,211,255,.1);position:relative;cursor:pointer;transition:background .3s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--txt);transition:transform .3s}
+.switch.on{background:var(--gold)}
+.switch.on::after{transform:translateX(20px);background:#05060d}
+.empty,.loading,.hint{color:var(--mut);font-size:13px;text-align:center;padding:10px}
+.bottom{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-around;padding:10px 6px calc(10px + env(safe-area-inset-bottom));background:rgba(5,6,13,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:20}
+.bottom button{flex:1;border:0;background:transparent;color:var(--mut);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:color .3s,transform .2s;padding:4px}
+.bottom button .ni{font-size:20px;transition:transform .3s}
+.bottom button.active{color:var(--gold)}
+.bottom button.active .ni{transform:translateY(-2px) scale(1.12)}
+#toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-120%);background:rgba(20,26,48,.95);border:1px solid var(--blue);padding:10px 16px;border-radius:999px;font-size:13px;z-index:50;transition:transform .35s ease;max-width:90%;text-align:center}
+#toast.show{transform:translate(-50%,0)}
+#toast.ok{border-color:var(--gold)}
+#toast.bad{border-color:#ff6b6b}
+.gate{position:fixed;inset:0;background:rgba(5,6,13,.95);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+.gate-box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;text-align:center;max-width:340px}
+.coin-mini{font-weight:800;color:var(--gold);font-size:20px;margin-bottom:8px}
+.float{position:absolute;transform:translate(-50%,-50%);font-weight:800;color:var(--gold);pointer-events:none;animation:rise 1.2s ease forwards;z-index:5}
+@keyframes rise{0%{opacity:0;transform:translate(-50%,-30%)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-160%)}}
+.spark{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--blue);pointer-events:none;animation:sp .75s ease-out forwards}
+@keyframes sp{to{transform:translate(var(--dx),var(--dy));opacity:0}}
+.bump{animation:bump .45s ease}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
+.confirm-box{margin-top:10px;padding:10px;border:1px solid #ff6b6b;border-radius:12px}
+.row-btn{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 </style>
-</head>
 <body>
 
 <div id="toast"></div>
@@ -249,44 +143,68 @@ nav.bottom button.active .ni{background:linear-gradient(180deg,rgba(245,197,66,.
 </div>
 
 <header class="top">
-  <div class="brand"><img class="logo" src="grad-coin.jpg" alt="GRAD">GRADE</div>
-  <div class="hdr-bal"><span id="hdrBal">0</span><small>GRAD</small></div>
+  <div class="who">
+    <div class="avatar" id="avatar">M</div>
+    <div class="who-txt">
+      <div class="who-name" id="pName">Mineur</div>
+      <div class="who-id" id="pMeta">-</div>
+    </div>
+  </div>
+  <span id="hdrBal" class="hidden">0</span>
+  <button class="wallet-badge" id="walletBadge" type="button" data-tab="wallet">WALLET</button>
 </header>
 
 <main>
 
   <!-- MINER -->
   <section class="screen active" id="s-mine">
-    <div class="card" style="margin-bottom:0">
-      <div class="lbl" data-i18n="balance_label">Ton solde</div>
-      <div class="big"><span id="balMain">0</span> <span class="unit">GRAD</span></div>
-      <div class="sub"><span data-i18n="per_mine">Gain par minage</span> : <b id="rewardTxt">50</b> GRAD · <span data-i18n="per_hour">un minage par heure</span></div>
+    <div class="balance">
+      <div class="bal-lbl" data-i18n="balance_label">Ton solde</div>
+      <div class="bal-big"><span id="balMain">0</span></div>
+      <div class="bal-unit">GRAD</div>
     </div>
 
-    <div class="mine-stage" id="stage">
-      <div class="halo"></div>
-      <button id="coin" class="coin" aria-label="Miner">
-        <img class="coin-img" src="grad-coin.jpg" alt="" onerror="this.style.display='none'">
-        <span class="coin-veil"></span>
-        <span class="coin-inner">
-          <span class="coin-ico">⛏</span>
-          <span class="coin-mnx">GRAD</span>
-          <span class="coin-timer" id="coinTimer"></span>
-        </span>
+    <div class="mine-row">
+      <button class="daily" id="daily" type="button" aria-label="Daily Rewards">
+        <span class="gift">🎁</span>
+        <span>Daily Rewards</span>
+        <small>bientôt</small>
       </button>
+      <div class="stage" id="stage">
+        <div class="halo"></div>
+        <button id="coin" class="coin locked" aria-label="Miner">
+          <img class="coin-img" src="grad-coin.jpg" alt="GRAD COIN" onerror="this.style.display='none'">
+          <span class="coin-veil"></span>
+          <span class="coin-inner">
+            <span class="coin-ico">⛏</span>
+            <span class="coin-mnx">GRAD</span>
+            <span class="coin-timer" id="coinTimer"></span>
+          </span>
+        </button>
+      </div>
     </div>
 
+    <button class="big-btn" id="btnMine" disabled>⛏ Miner</button>
     <div class="status" id="mineStatus">Chargement...</div>
-    <button class="btn full big-btn" id="btnMine" disabled>⛏ Miner</button>
 
-    <div class="stats-grid">
-      <div class="stat"><span data-i18n="rank">Rang</span><b id="rankTxt">-</b></div>
-      <div class="stat"><span data-i18n="mines">Minages</span><b id="minesTxt">0</b></div>
-      <div class="stat"><span data-i18n="friends">Amis</span><b id="refTxt">0</b></div>
+    <div class="cards">
+      <div class="cc" id="cycleCard">
+        <div class="cc-ico">⛏ Cycle</div>
+        <div class="cc-val" id="cycleTxt">+1000 GRAD / cycle</div>
+      </div>
+      <div class="cc">
+        <div class="cc-ico">⏳ Prochain minage</div>
+        <div class="cc-timer" id="cycleTimer">00:00:00</div>
+      </div>
     </div>
-    <div class="hint" data-i18n="mine_hint" style="text-align:center;margin-top:12px">
-      Reviens chaque heure pour miner encore. Le compte à rebours démarre après chaque minage.
+    <div class="bar"><span id="cycleBar"></span></div>
+
+    <div class="mini">
+      <div>Rang <b id="rankTxt">-</b></div>
+      <div>Minages <b id="minesTxt">0</b></div>
+      <div>Amis <b id="refTxt">0</b></div>
     </div>
+    <span id="rewardTxt" class="hidden">1000</span>
   </section>
 
   <!-- TACHES -->
@@ -324,30 +242,17 @@ nav.bottom button.active .ni{background:linear-gradient(180deg,rgba(245,197,66,.
     <p class="muted" data-i18n="wallet_desc">Ton solde en GRAD et l'adresse où tu veux recevoir tes gains. Les retraits seront disponibles plus tard.</p>
     <div class="card">
       <div class="lbl" data-i18n="balance_avail">Solde disponible</div>
-      <div class="big" style="font-size:32px"><span id="walBal">0</span> <span class="unit">GRAD</span></div>
+      <div class="big"><span id="walBal">0</span> <span class="unit">GRAD</span></div>
     </div>
     <div class="card">
-      <div class="lbl" data-i18n="addr_now">Adresse actuelle</div>
+      <div class="lbl" data-i18n="addr_now">Adresse actuelle (réseau BNB)</div>
       <div class="addr" id="walletNow">Aucune adresse enregistrée</div>
-      <input id="walletIn" class="field" type="text" maxlength="120" placeholder="Colle ton adresse de portefeuille" data-i18n-ph="wallet_ph" autocomplete="off">
+      <input id="walletIn" class="field" type="text" maxlength="120" placeholder="Colle ton adresse BNB" data-i18n-ph="wallet_ph" autocomplete="off">
       <button class="btn full" id="btnWallet" data-i18n="save_addr" style="margin-top:10px">Enregistrer l'adresse</button>
       <div class="hint" data-i18n="wallet_hint">Ajouter ton portefeuille te rapporte aussi 200 GRAD via la tâche correspondante.</div>
     </div>
-  </section>
-
-  <!-- PROFIL -->
-  <section class="screen" id="s-profile">
-    <h2 class="title"><em data-i18n="tab_profile" style="font-style:normal">Profil</em> <span>👤</span></h2>
     <div class="card">
-      <div class="profile">
-        <div class="avatar" id="avatar">M</div>
-        <div style="min-width:0">
-          <div class="pname" id="pName">Mineur</div>
-          <div class="pmeta" id="pMeta">-</div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
+      <div class="set-title" data-i18n="tab_profile">Profil</div>
       <div class="kv"><span data-i18n="balance_kv">Solde</span><b id="kvBal">0 GRAD</b></div>
       <div class="kv"><span data-i18n="rank">Rang</span><b id="kvRank">-</b></div>
       <div class="kv"><span data-i18n="mines_done">Minages effectués</span><b id="kvMines">0</b></div>
@@ -368,7 +273,7 @@ nav.bottom button.active .ni{background:linear-gradient(180deg,rgba(245,197,66,.
       <div class="set-title" data-i18n="tab_wallet">Portefeuille</div>
       <div class="lbl" data-i18n="addr_now">Adresse actuelle</div>
       <div class="addr" id="setWalletNow">Aucune adresse enregistrée</div>
-      <input id="setWalletIn" class="field" type="text" maxlength="120" placeholder="Colle ou modifie ton adresse" data-i18n-ph="wallet_ph2" autocomplete="off">
+      <input id="setWalletIn" class="field" type="text" maxlength="120" placeholder="Colle ou modifie ton adresse BNB" data-i18n-ph="wallet_ph2" autocomplete="off">
       <button class="btn full" id="btnSetWallet" data-i18n="save_addr" style="margin-top:10px">Enregistrer l'adresse</button>
     </div>
     <div class="card">
@@ -399,13 +304,11 @@ nav.bottom button.active .ni{background:linear-gradient(180deg,rgba(245,197,66,.
 </main>
 
 <nav class="bottom">
-  <button data-tab="mine" class="active"><span class="ni">⛏</span><span data-i18n="tab_mine">Miner</span></button>
-  <button data-tab="tasks"><span class="ni">✅</span><span data-i18n="tab_tasks">Tâches</span></button>
   <button data-tab="friends"><span class="ni">👥</span><span data-i18n="friends">Amis</span></button>
+  <button data-tab="tasks"><span class="ni">✅</span><span data-i18n="tab_tasks">Tâches</span></button>
+  <button data-tab="mine" class="active"><span class="ni">⛏</span><span data-i18n="tab_mine">Miner</span></button>
   <button data-tab="wallet"><span class="ni">💼</span><span data-i18n="tab_wallet">Portefeuille</span></button>
-  <button data-tab="profile"><span class="ni">👤</span><span data-i18n="tab_profile">Profil</span></button>
 </nav>
-
 <script>
 (function(){
 "use strict";
@@ -651,10 +554,18 @@ function fmtDur(sec) {
   return pad2(mn) + "m " + pad2(ss) + "s";
 }
 
+function fmtHMS(sec) {
+  const total = Math.max(0, Math.ceil(sec));
+  const hh = Math.floor(total / 3600);
+  const mm = Math.floor((total % 3600) / 60);
+  const ss = total % 60;
+  return pad2(hh) + ":" + pad2(mm) + ":" + pad2(ss);
+}
+
 function applyState(d) {
   if (!d || !d.me) return;
   S.me = d.me;
-  if (d.tasks) S.tasks = d.tasks;
+  if (Array.isArray(d.tasks)) S.tasks = d.tasks;
   S.nextAt = d.me.can_mine ? 0 : d.me.next_mine_at;
   S.offset = (d.me.server_now || Date.now() / 1000) - Date.now() / 1000;
   S.reward = d.me.mine_reward;
@@ -668,33 +579,33 @@ function renderMine() {
   if (!S.me) return;
   const rem = remaining();
   const ready = rem <= 0;
-  const hdr = Math.floor(S.me.balance);
-  $("#balMain").textContent = fmt(hdr);
-  $("#hdrBal").textContent = fmt(hdr);
-  $("#rewardTxt").textContent = fmt(S.reward);
+  const bal = Math.floor(S.me.balance);
+  $("#balMain").textContent = fmt(bal);
+  $("#hdrBal").textContent = fmt(bal);
   $("#rankTxt").textContent = "#" + fmt(S.me.rank);
   $("#minesTxt").textContent = fmt(S.me.mines_count);
   $("#refTxt").textContent = fmt(S.me.referrals);
+  $("#rewardTxt").textContent = fmt(S.reward);
+  $("#cycleTxt").textContent = ready ? "Prêt à miner" : "+" + fmt(S.reward) + " GRAD / cycle";
+  $("#cycleCard").classList.toggle("ready", ready);
+
+  const total = 86400;
+  const elapsed = Math.min(total, Math.max(0, total - rem));
+  const pct = ready ? 100 : (elapsed / total) * 100;
+  $("#cycleBar").style.width = pct.toFixed(2) + "%";
+  $("#cycleTimer").textContent = ready ? "00:00:00" : fmtHMS(rem);
 
   const coin = $("#coin");
   coin.classList.toggle("locked", !ready);
-  $("#coinTimer").textContent = ready ? "" : fmtDur(rem);
-  $("#stage").classList.toggle("locked", !ready);
   coin.disabled = !ready || S.busy;
+  $("#coinTimer").textContent = ready ? "" : fmtHMS(rem);
   $("#btnMine").disabled = !ready || S.busy;
   $("#btnMine").textContent = "⛏ " + (S.busy ? tr("busy") : tr("btn_mine"));
 
   const st = $("#mineStatus");
-  if (S.busy) {
-    st.className = "status wait";
-    st.textContent = tr("in_progress");
-  } else if (ready) {
-    st.className = "status ok";
-    st.textContent = tr("ready", { n: fmt(S.reward), cur: S.cur });
-  } else {
-    st.className = "status wait";
-    st.textContent = tr("next_in", { t: fmtDur(rem) });
-  }
+  if (S.busy) { st.className = "status wait"; st.textContent = tr("in_progress"); }
+  else if (ready) { st.className = "status ok"; st.textContent = tr("ready", { n: fmt(S.reward), cur: S.cur }); }
+  else { st.className = "status wait"; st.textContent = tr("next_in", { t: fmtDur(rem) }); }
 }
 
 function spawnFloat(text) {
@@ -748,7 +659,14 @@ async function onMine() {
 
 /* ---------- Taches ---------- */
 function renderTasks() {
-  if (!S.tasks.length || !S.me) return;
+  if (!S.me) return;
+  if (!S.tasks || !S.tasks.length) {
+    const el = $("#taskList");
+    if (el && !el.dataset.loaded) el.innerHTML = '<div class="empty">Chargement des tâches...</div>';
+    return;
+  }
+  const tl = $("#taskList");
+  if (tl) tl.dataset.loaded = "1";
   $("#taskList").innerHTML = S.tasks.map((t) => {
     let act = "";
     if (t.claimed) {

@@ -1,6 +1,6 @@
 """GRADE - mini app Telegram de minage (monnaie GRAD).
 
-Minage une fois par heure, decide et verifie cote serveur.
+Minage une fois par 24 h, decide et verifie cote serveur.
 Un seul processus: bot Telegram (webhook), serveur HTTP aiohttp qui sert
 index.html et l'API /api/<action>, stockage SQLite.
 """
@@ -51,8 +51,8 @@ CURRENCY = "GRAD"
 # Langues de l'interface (10 plus utilisees), stockees dans users.lang
 LANG_CODES = ("fr", "en", "zh", "hi", "es", "ar", "bn", "pt", "ru", "ur", "id", "de", "ja", "sw", "mr", "te", "tr", "ta", "vi", "ko", "it", "th", "gu", "fa", "pl", "uk", "ro", "nl", "el", "hu", "cs", "sv", "da", "fi", "no", "he", "ms", "tl", "am", "ha", "yo", "ig", "zu", "xh", "af", "so", "rw", "ln", "kg", "lu", "ny", "sn", "om", "ti", "lg", "wo", "ff", "mg", "ku", "ps", "az", "uz", "kk", "ky", "tg", "tk", "hy", "ka", "mn", "ne", "si", "my", "km", "lo", "sr", "hr", "bs", "sk", "sl", "lt", "lv", "et", "is", "ga", "ca", "gl", "eu", "mt", "sq", "mk", "bg", "be", "lb", "fo", "ceb", "jv", "su", "ml", "kn", "pa")
 
-MINE_REWARD = 50              # GRAD gagnes a chaque minage
-MINE_COOLDOWN = 3600          # un minage toutes les 1 h
+MINE_REWARD = 1000            # GRAD gagnes a chaque minage
+MINE_COOLDOWN = 86400         # un minage toutes les 24 h
 REFERRAL_BONUS = 500          # GRAD pour le parrain a chaque ami inscrit
 REFERRED_WELCOME = 250        # GRAD offerts a l'ami invite
 INITDATA_MAX_AGE = 86400
@@ -294,7 +294,7 @@ async def act_me(uid, body, request):
 
 
 async def act_mine(uid, body, request):
-    """Minage: une fois par heure. La verification et la mise a jour sont
+    """Minage: une fois par 24 h. La verification et la mise a jour sont
     faites en une seule requete SQL (pas de course possible entre deux clics)."""
     now = time.time()
     cur = DB.execute(
@@ -468,7 +468,7 @@ async def api_route(request: web.Request) -> web.Response:
         data = {"ok": False, "error": str(e), **build_state(uid)}
     except Exception:
         log.exception("Erreur dans l'action %s", action)
-        data = {"ok": False, "error": "Erreur serveur, réessaie dans un instant."}
+        data = {"ok": False, "error": "Erreur serveur, réessaie dans un instant.", **build_state(uid)}
     return web.json_response(data)
 
 
