@@ -61,6 +61,7 @@ DAILY_COOLDOWN = 86400
 MINE_COOLDOWN = 86400         # un minage toutes les 24 h
 REFERRAL_BONUS = 500          # GRAD pour le parrain a chaque ami inscrit
 REFERRED_WELCOME = 250        # GRAD offerts a l'ami invite
+WELCOME_BONUS = 1000         # GRAD credites une seule fois a la creation du compte (flag welcomed_at)
 INITDATA_MAX_AGE = 86400
 
 TASKS = [
@@ -114,6 +115,10 @@ def migrate(conn: sqlite3.Connection) -> None:
         # etaient entierement credites: on marque 1000 pour ne rien recréditer.
         conn.execute("ALTER TABLE users ADD COLUMN mine_credited INTEGER NOT NULL DEFAULT 0")
         conn.execute("UPDATE users SET mine_credited = ? WHERE last_mine_at IS NOT NULL", (MINE_REWARD,))
+    if "welcomed_at" not in cols:
+        # Bonus de bienvenue: NULL = pas encore credite. Les comptes existants (crees avant)
+        # sont credites au premier /api/me via db_claim_welcome (solde + flag dans un seul UPDATE).
+        conn.execute("ALTER TABLE users ADD COLUMN welcomed_at REAL")
     if "daily_last_claim" not in cols:
         # Calendrier Daily Rewards : dernier claim (epoch) et jour courant (1 a 7)
         conn.execute("ALTER TABLE users ADD COLUMN daily_last_claim REAL NOT NULL DEFAULT 0")
@@ -188,16 +193,29 @@ def db_ensure_user(uid: int, username, first_name, ref_id=None):
         referred_by = ref_id
 
     now = time.time()
-    start_balance = REFERRED_WELCOME if referred_by else 0
+    # Bonus de bienvenue credite dans le meme INSERT que la creation (flag welcomed_at pose
+    # en meme temps: pas de double credit possible).
+    start_balance = (REFERRED_WELCOME if referred_by else 0) + WELCOME_BONUS
     DB.execute(
-        "INSERT INTO users (id, username, first_name, balance, referred_by, created)"
-        " VALUES (?, ?, ?, ?, ?, ?)",
-        (uid, username, first_name, start_balance, referred_by, now),
+        "INSERT INTO users (id, username, first_name, balance, referred_by, created, welcomed_at)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (uid, username, first_name, start_balance, referred_by, now, now),
     )
     if referred_by:
         DB.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (REFERRAL_BONUS, referred_by))
     DB.commit()
     return db_get_user(uid), True
+
+
+def db_claim_welcome(uid: int) -> bool:
+    """Credite WELCOME_BONUS une seule fois. Solde et flag sont poses dans UN seul UPDATE
+    (atomique): si le flag est deja pose, la condition WHERE echoue et rien n'est credite."""
+    cur = DB.execute(
+        "UPDATE users SET balance = balance + ?, welcomed_at = ? WHERE id = ? AND welcomed_at IS NULL",
+        (WELCOME_BONUS, time.time(), uid),
+    )
+    DB.commit()
+    return cur.rowcount == 1
 
 
 def db_count_referrals(uid: int) -> int:
@@ -273,6 +291,7 @@ def daily_state(row, now: float) -> dict:
 
 
 def build_state(uid: int) -> dict:
+    db_claim_welcome(uid)  # comptes existants: credite une fois (no-op si deja fait)
     settle_user(uid)
     row = db_get_user(uid)
     now = time.time()
@@ -656,6 +675,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         f"Appuie sur Miner une fois par heure pour gagner {MINE_REWARD} {CURRENCY}. "
         "Invite tes amis et gagne encore plus.",
     ]
+    if created:
+        lines += ["", f"🎁 Bonus de bienvenue : +{WELCOME_BONUS} {CURRENCY} crédités."]
     if created and ref_id and db_get_user(ref_id):
         lines += ["", f"🎁 Tu as rejoint via un parrain : +{REFERRED_WELCOME} {CURRENCY} offerts."]
     lines += ["", "Appuie sur le bouton ci-dessous pour lancer l'app."]
