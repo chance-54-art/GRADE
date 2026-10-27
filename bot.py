@@ -334,10 +334,13 @@ async def act_task_claim(uid, body, request):
         if not done:
             raise ApiError("Tâche pas encore terminée.")
 
-    DB.execute(
+    cur = DB.execute(
         "INSERT OR IGNORE INTO user_tasks (user_id, task_id, claimed_at) VALUES (?, ?, ?)",
         (uid, task_id, time.time()),
     )
+    if cur.rowcount != 1:
+        DB.rollback()
+        raise ApiError("Tu as déjà réclamé cette tâche.")
     DB.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (task["reward"], uid))
     DB.commit()
     return {"ok": True, "gained": task["reward"],
@@ -492,6 +495,13 @@ async def index(request: web.Request) -> web.Response:
     return web.FileResponse(INDEX_PATH, headers={"Cache-Control": "no-cache"})
 
 
+async def coin_image(request: web.Request) -> web.Response:
+    path = Path(__file__).resolve().parent / "grad-coin.jpg"
+    if not path.exists():
+        return web.Response(text="image introuvable", status=404)
+    return web.FileResponse(path, headers={"Cache-Control": "public, max-age=86400"})
+
+
 async def health(request: web.Request) -> web.Response:
     return web.Response(text="ok")
 
@@ -589,6 +599,7 @@ async def main() -> None:
     web_app["tg"] = tg
     web_app.router.add_get("/", index)
     web_app.router.add_get("/health", health)
+    web_app.router.add_get("/grad-coin.jpg", coin_image)
     web_app.router.add_post("/webhook", telegram_webhook)
     web_app.router.add_post("/api/{action}", api_route)
 

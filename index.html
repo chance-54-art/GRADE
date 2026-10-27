@@ -33,7 +33,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:3px;font-size:18px;
   background:linear-gradient(90deg,#fff3b0,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo{
-  width:30px;height:30px;border-radius:50%;display:block;object-fit:cover;
+  width:34px;height:34px;border-radius:50%;display:block;object-fit:cover;
   box-shadow:0 0 14px rgba(245,197,66,.5);
 }
 .coin-img{
@@ -64,13 +64,14 @@ main{padding:14px 14px 104px;max-width:520px;margin:0 auto}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;font-weight:600}
 
 /* Bouton principal */
-.btn{
+.btn{transition:transform .12s ease,box-shadow .2s ease,filter .2s ease;
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
   padding:12px 16px;border-radius:14px;font-weight:800;font-size:14px;
   background:linear-gradient(180deg,#ffe07a,var(--gold) 50%,var(--gold2));color:#2a1a00;
   box-shadow:0 6px 18px rgba(245,197,66,.25);transition:transform .1s,filter .15s;
 }
 .btn:active{transform:scale(.97)}
+.btn:not(:disabled):active{transform:scale(.97)}
 .btn.ghost{background:rgba(245,197,66,.08);color:var(--gold);border:1px solid var(--line);box-shadow:none}
 .btn.full{width:100%}
 .btn.sm{padding:9px 12px;font-size:13px;border-radius:12px}
@@ -103,7 +104,12 @@ main{padding:14px 14px 104px;max-width:520px;margin:0 auto}
   transform:translateX(-60%);animation:shine 4.5s ease-in-out infinite;
 }
 @keyframes shine{0%,55%{transform:translateX(-60%)}100%{transform:translateX(60%)}}
-.coin.locked{filter:grayscale(.85) brightness(.6);box-shadow:inset 0 -12px 26px rgba(0,0,0,.5)}
+.coin.locked{filter:brightness(.72) saturate(.85);box-shadow:0 0 30px rgba(0,0,0,.35),inset 0 -12px 26px rgba(0,0,0,.35)}
+.coin-veil{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(11,11,26,0) 40%,rgba(11,11,26,.55) 100%);opacity:0;transition:opacity .4s;z-index:0;pointer-events:none}
+.coin.locked .coin-veil{opacity:1}
+.coin-timer{display:none;font-size:20px;font-weight:900;color:#fff8d2;text-shadow:0 2px 8px rgba(0,0,0,.8);margin-top:6px;font-variant-numeric:tabular-nums}
+.coin.locked .coin-timer{display:block}
+.coin.locked .coin-ico,.coin.locked .coin-mnx{opacity:.35}
 .coin.locked::after{animation:none;opacity:0}
 .coin.bump{animation:bump .25s ease}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.05)}100%{transform:scale(1)}}
@@ -252,10 +258,12 @@ nav.bottom button.active{color:var(--gold);background:rgba(245,197,66,.09)}
     <div class="mine-stage" id="stage">
       <div class="halo"></div>
       <button id="coin" class="coin" aria-label="Miner">
-        <img class="coin-img" src="grad-coin.jpg" alt="">
+        <img class="coin-img" src="grad-coin.jpg" alt="" onerror="this.style.display='none'">
+        <span class="coin-veil"></span>
         <span class="coin-inner">
           <span class="coin-ico">⛏</span>
           <span class="coin-mnx">GRAD</span>
+          <span class="coin-timer" id="coinTimer"></span>
         </span>
       </button>
     </div>
@@ -454,7 +462,7 @@ async function call(action, payload) {
 }
 
 /* ---------- Langues (10 plus utilisees) ---------- */
-const LANG_NAMES = { fr: "Français", en: "English", es: "Español", pt: "Português", ar: "العربية", sw: "Kiswahili", zh: "中文", hi: "हिन्दी", ru: "Русский", de: "Deutsch" };
+const LANG_NAMES = { fr: "🇫🇷 Français", en: "🇬🇧 English", es: "🇪🇸 Español", pt: "🇵🇹 Português", ar: "🇸🇦 العربية", sw: "🇰🇪 Kiswahili", zh: "🇨🇳 中文", hi: "🇮🇳 हिन्दी", ru: "🇷🇺 Русский", de: "🇩🇪 Deutsch" };
 const I18N = {
   fr: { balance_label: "Ton solde", per_mine: "Gain par minage", per_hour: "un minage par heure", rank: "Rang", mines: "Minages", friends: "Amis", tasks_desc: "Termine les tâches pour gagner des GRAD bonus. Chaque tâche se réclame une seule fois.", tab_tasks: "Tâches", tab_mine: "Miner", ref_label: "Ton lien de parrainage", copy: "Copier", share: "Partager", gains_ref: "Gains parrainage", your_refs: "Tes filleuls", tab_wallet: "Portefeuille", wallet_desc: "Ton solde en GRAD et l'adresse où tu veux recevoir tes gains. Les retraits seront disponibles plus tard.", balance_avail: "Solde disponible", addr_now: "Adresse actuelle", wallet_ph: "Colle ton adresse de portefeuille", wallet_ph2: "Colle ou modifie ton adresse", save_addr: "Enregistrer l'adresse", wallet_hint: "Ajouter ton portefeuille te rapporte aussi 200 GRAD via la tâche correspondante.", tab_profile: "Profil", balance_kv: "Solde", mines_done: "Minages effectués", referred: "Amis parrainés", member_since: "Membre depuis", leaderboard: "Classement", settings: "Réglages du compte", display_name: "Pseudo affiché", name_ph: "Ton pseudo (24 caractères max)", save_name: "Enregistrer le pseudo", prefs: "Préférences", language: "Langue", language_desc: "Langue de l'interface", notifications: "Notifications", notif_desc: "Rappels quand ton minage est prêt", danger: "Zone de danger", reset_btn: "Réinitialiser mon compte", reset_confirm: "Action définitive : ton solde GRAD et tes minages repartent à zéro. Confirmer ?", cancel: "Annuler", reset_yes: "Oui, réinitialiser", busy: "Minage...", btn_mine: "Miner", in_progress: "Minage en cours...", ready: "Prêt à miner : +{n} {cur}", next_in: "Prochain minage dans {t}", claimed: "Réclamée", open: "Ouvrir", claim: "Réclamer", no_refs: "Aucun filleul pour le moment. Partage ton lien !", share_text: "Rejoins-moi sur GRADE et gagne des GRAD avec moi !", no_addr: "Aucune adresse enregistrée", lang_saved: "Langue enregistrée", invite_desc: "Invite tes amis avec ton lien. Tu gagnes {b} GRAD pour chaque ami inscrit, et ton ami reçoit {w} GRAD." },
   en: { balance_label: "Your balance", per_mine: "Reward per mine", per_hour: "one mine per hour", rank: "Rank", mines: "Mines", friends: "Friends", tasks_desc: "Complete tasks to earn bonus GRAD. Each task can be claimed once.", tab_tasks: "Tasks", tab_mine: "Mine", ref_label: "Your referral link", copy: "Copy", share: "Share", gains_ref: "Referral earnings", your_refs: "Your referrals", tab_wallet: "Wallet", wallet_desc: "Your GRAD balance and the address where you want to receive your earnings. Withdrawals will come later.", balance_avail: "Available balance", addr_now: "Current address", wallet_ph: "Paste your wallet address", wallet_ph2: "Paste or edit your address", save_addr: "Save address", wallet_hint: "Adding your wallet also earns you 200 GRAD through the matching task.", tab_profile: "Profile", balance_kv: "Balance", mines_done: "Mines done", referred: "Referred friends", member_since: "Member since", leaderboard: "Leaderboard", settings: "Account settings", display_name: "Display name", name_ph: "Your name (24 characters max)", save_name: "Save name", prefs: "Preferences", language: "Language", language_desc: "Interface language", notifications: "Notifications", notif_desc: "Reminders when your mine is ready", danger: "Danger zone", reset_btn: "Reset my account", reset_confirm: "This is permanent: your GRAD balance and mines go back to zero. Confirm?", cancel: "Cancel", reset_yes: "Yes, reset", busy: "Mining...", btn_mine: "Mine", in_progress: "Mining in progress...", ready: "Ready to mine: +{n} {cur}", next_in: "Next mine in {t}", claimed: "Claimed", open: "Open", claim: "Claim", no_refs: "No referrals yet. Share your link!", share_text: "Join me on GRADE and earn GRAD together!", no_addr: "No address saved", lang_saved: "Language saved", invite_desc: "Invite friends with your link. You earn {b} GRAD for each friend who signs up, and your friend gets {w} GRAD." },
@@ -546,6 +554,7 @@ function renderMine() {
 
   const coin = $("#coin");
   coin.classList.toggle("locked", !ready);
+  $("#coinTimer").textContent = ready ? "" : fmtDur(rem);
   $("#stage").classList.toggle("locked", !ready);
   coin.disabled = !ready || S.busy;
   $("#btnMine").disabled = !ready || S.busy;
