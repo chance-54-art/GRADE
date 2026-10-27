@@ -597,9 +597,16 @@ function liveBalance() {
   const cs = S.me.cycle_start || 0;
   if (!cs) return S.me.balance;
   const elapsed = Math.min(Math.max(serverNow() - cs, 0), S.me.mine_cooldown_s);
-  const accrued = Math.floor(S.me.mine_reward * elapsed / S.me.mine_cooldown_s);
+  // meme formule que le serveur: reward * mult du cycle * temps ecoule / 24 h (mult fige au debut du cycle)
+  const mult = S.me.cycle_mult || S.me.mult || 1;
+  const accrued = S.me.mine_reward * mult * elapsed / S.me.mine_cooldown_s;
   const credited = S.me.cycle_credited || 0;
   return S.me.balance + Math.max(0, accrued - credited);
+}
+// Affichage continu: 3 decimales tronquees (jamais arrondi au-dessus). Le serveur credite l'entier inferieur.
+function liveBalanceFmt() {
+  const v = Math.floor(liveBalance() * 1000) / 1000;
+  return v.toLocaleString("fr-FR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 }
 function remaining() {
   if (!S.nextAt) return 0;
@@ -644,7 +651,7 @@ function renderMine() {
   const rem = remaining();
   const ready = rem <= 0;
   const bal = Math.floor(liveBalance());
-  $("#balMain").textContent = fmt(bal);
+  $("#balMain").textContent = liveBalanceFmt();
   $("#hdrBal").textContent = fmt(bal);
   $("#rankTxt").textContent = "#" + fmt(S.me.rank);
   $("#minesTxt").textContent = fmt(S.me.mines_count);

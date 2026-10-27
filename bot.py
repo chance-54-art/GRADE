@@ -620,6 +620,7 @@ def build_state(uid: int) -> dict:
         "cycle_credited": cycle_credited,
         "cycle_accrued": cycle_pending,
         "cycle_start": float(row["last_mine_at"] or 0),
+        "cycle_mult": float(row["cycle_mult"] or 1.0),
         "next_mine_at": int(next_mine_at),
         "seconds_left": 0 if can_mine else int(next_mine_at - now) + 1,
         "server_now": now,
