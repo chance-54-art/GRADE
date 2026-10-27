@@ -49,7 +49,7 @@ INDEX_PATH = Path(__file__).resolve().parent / "index.html"
 APP_NAME = "GRADE"
 CURRENCY = "GRAD"
 # Langues de l'interface (10 plus utilisees), stockees dans users.lang
-LANG_CODES = ("fr", "en", "es", "pt", "ar", "sw", "zh", "hi", "ru", "de")
+LANG_CODES = ("fr", "en", "zh", "hi", "es", "ar", "bn", "pt", "ru", "ur", "id", "de", "ja", "sw", "mr", "te", "tr", "ta", "vi", "ko", "it", "th", "gu", "fa", "pl", "uk", "ro", "nl", "el", "hu", "cs", "sv", "da", "fi", "no", "he", "ms", "tl", "am", "ha", "yo", "ig", "zu", "xh", "af", "so", "rw", "ln", "kg", "lu", "ny", "sn", "om", "ti", "lg", "wo", "ff", "mg", "ku", "ps", "az", "uz", "kk", "ky", "tg", "tk", "hy", "ka", "mn", "ne", "si", "my", "km", "lo", "sr", "hr", "bs", "sk", "sl", "lt", "lv", "et", "is", "ga", "ca", "gl", "eu", "mt", "sq", "mk", "bg", "be", "lb", "fo", "ceb", "jv", "su", "ml", "kn", "pa")
 
 MINE_REWARD = 50              # GRAD gagnes a chaque minage
 MINE_COOLDOWN = 3600          # un minage toutes les 1 h
