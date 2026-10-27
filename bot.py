@@ -53,6 +53,11 @@ CURRENCY = "GRAD"
 LANG_CODES = ("fr", "en", "zh", "hi", "es", "ar", "bn", "pt", "ru", "ur", "id", "de", "ja", "sw", "mr", "te", "tr", "ta", "vi", "ko", "it", "th", "gu", "fa", "pl", "uk", "ro", "nl", "el", "hu", "cs", "sv", "da", "fi", "no", "he", "ms", "tl", "am", "ha", "yo", "ig", "zu", "xh", "af", "so", "rw", "ln", "kg", "lu", "ny", "sn", "om", "ti", "lg", "wo", "ff", "mg", "ku", "ps", "az", "uz", "kk", "ky", "tg", "tk", "hy", "ka", "mn", "ne", "si", "my", "km", "lo", "sr", "hr", "bs", "sk", "sl", "lt", "lv", "et", "is", "ga", "ca", "gl", "eu", "mt", "sq", "mk", "bg", "be", "lb", "fo", "ceb", "jv", "su", "ml", "kn", "pa")
 
 MINE_REWARD = 1000            # GRAD gagnes a chaque minage
+# Daily Rewards: jour 1 = 100 GRAD, +50 par jour, jour 7 = 400 GRAD, puis le cycle reprend
+DAILY_BASE = 100
+DAILY_STEP = 50
+DAILY_DAYS = 7
+DAILY_COOLDOWN = 86400
 MINE_COOLDOWN = 86400         # un minage toutes les 24 h
 REFERRAL_BONUS = 500          # GRAD pour le parrain a chaque ami inscrit
 REFERRED_WELCOME = 250        # GRAD offerts a l'ami invite
@@ -109,6 +114,10 @@ def migrate(conn: sqlite3.Connection) -> None:
         # etaient entierement credites: on marque 1000 pour ne rien recréditer.
         conn.execute("ALTER TABLE users ADD COLUMN mine_credited INTEGER NOT NULL DEFAULT 0")
         conn.execute("UPDATE users SET mine_credited = ? WHERE last_mine_at IS NOT NULL", (MINE_REWARD,))
+    if "daily_last_claim" not in cols:
+        # Calendrier Daily Rewards : dernier claim (epoch) et jour courant (1 a 7)
+        conn.execute("ALTER TABLE users ADD COLUMN daily_last_claim REAL NOT NULL DEFAULT 0")
+        conn.execute("ALTER TABLE users ADD COLUMN daily_day INTEGER NOT NULL DEFAULT 0")
     conn.commit()
 
 
@@ -235,6 +244,34 @@ def task_status(task: dict, row, refs: int):
     return False, "Vérification au moment de réclamer"
 
 
+def daily_bonus(day: int) -> int:
+    return DAILY_BASE + DAILY_STEP * (day - 1)
+
+
+def daily_next_day(row, now: float) -> int:
+    """Jour qui serait credite au prochain claim (meme regle que act_daily_claim)."""
+    last = float(row["daily_last_claim"] or 0)
+    if not last or (now - last) >= 2 * DAILY_COOLDOWN:
+        return 1
+    return (int(row["daily_day"] or 0) % DAILY_DAYS) + 1
+
+
+def daily_state(row, now: float) -> dict:
+    """Etat du calendrier Daily Rewards, derive des valeurs serveur."""
+    last = float(row["daily_last_claim"] or 0)
+    can = (not last) or (now - last) >= DAILY_COOLDOWN
+    nxt = daily_next_day(row, now)
+    return {
+        "can_claim": can,
+        "day": int(row["daily_day"] or 0),
+        "next_day": nxt,
+        "next_bonus": daily_bonus(nxt),
+        "next_claim_at": 0 if can else int(last + DAILY_COOLDOWN),
+        "bonuses": [daily_bonus(d) for d in range(1, DAILY_DAYS + 1)],
+        "days": DAILY_DAYS,
+    }
+
+
 def build_state(uid: int) -> dict:
     settle_user(uid)
     row = db_get_user(uid)
@@ -278,6 +315,7 @@ def build_state(uid: int) -> dict:
         "next_mine_at": int(next_mine_at),
         "seconds_left": 0 if can_mine else int(next_mine_at - now) + 1,
         "server_now": now,
+        "daily": daily_state(row, now),
     }
 
     tasks = []
@@ -371,9 +409,14 @@ async def act_task_claim(uid, body, request):
     if task["kind"] == "channel":
         if not CHANNEL_ID:
             raise ApiError("Tâche indisponible pour le moment.")
+        tg = request.app.get("tg")
+        if tg is None:
+            # Bot Telegram pas encore pret : on ne peut pas verifier le canal, on le dit proprement
+            raise ApiError("Vérification du canal indisponible pour le moment. Réessaie plus tard.")
         try:
-            member = await request.app["tg"].bot.get_chat_member(CHANNEL_ID, uid)
-        except TelegramError:
+            member = await tg.bot.get_chat_member(CHANNEL_ID, uid)
+        except Exception:
+            log.exception("get_chat_member a échoué pour %s", uid)
             raise ApiError("Impossible de vérifier le canal pour le moment. Réessaie plus tard.")
         if member.status not in ("member", "administrator", "creator"):
             raise ApiError("Tu n'es pas encore membre du canal.")
@@ -394,6 +437,34 @@ async def act_task_claim(uid, body, request):
     DB.commit()
     return {"ok": True, "gained": task["reward"],
             "message": f"+{task['reward']} {CURRENCY} : {task['title']}", **build_state(uid)}
+
+
+async def act_daily_claim(uid, body, request):
+    """Claim du jour: 1 fois par 24 h, verifie cote serveur, anti-double-claim atomique."""
+    now = time.time()
+    row = db_get_user(uid)
+    last = float(row["daily_last_claim"] or 0)
+    if last and (now - last) < DAILY_COOLDOWN:
+        raise ApiError("Tu as déjà réclamé ton bonus aujourd'hui. Reviens dans 24 h.")
+    # Serie: si le dernier claim date de plus de 48 h, on repart au jour 1
+    prev_day = int(row["daily_day"] or 0)
+    if not last or (now - last) >= 2 * DAILY_COOLDOWN:
+        day = 1
+    else:
+        day = (prev_day % DAILY_DAYS) + 1
+    bonus = daily_bonus(day)
+    # Claim atomique: la condition est re-verifiee dans l'UPDATE (pas de double credit en parallele)
+    cur = DB.execute(
+        "UPDATE users SET daily_last_claim = ?, daily_day = ?, balance = balance + ? "
+        "WHERE id = ? AND daily_last_claim <= ?",
+        (now, day, bonus, uid, now - DAILY_COOLDOWN),
+    )
+    if cur.rowcount != 1:
+        DB.rollback()
+        raise ApiError("Tu as déjà réclamé ton bonus aujourd'hui. Reviens dans 24 h.")
+    DB.commit()
+    return {"ok": True, "gained": bonus, "day": day,
+            "message": f"Jour {day} : +{bonus} {CURRENCY}", **build_state(uid)}
 
 
 async def act_leaderboard(uid, body, request):
@@ -481,6 +552,7 @@ ACTIONS = {
     "me": act_me,
     "mine": act_mine,
     "task_claim": act_task_claim,
+    "daily_claim": act_daily_claim,
     "leaderboard": act_leaderboard,
     "referrals": act_referrals,
     "wallet_set": act_wallet_set,

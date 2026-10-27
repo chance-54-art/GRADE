@@ -34,6 +34,17 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
 .mine-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 6px}
 .daily{width:78px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:10px 6px;text-align:center;cursor:pointer;transition:transform .2s,border-color .3s;flex:none;color:var(--txt)}
 .daily:hover{border-color:var(--gold)}
+.daily-box{max-width:360px;width:100%}
+.daily-sub{font-size:13px;color:var(--mut);margin:6px 0 14px}
+.daily-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dday{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:8px 4px;text-align:center;font-size:11px;color:var(--mut)}
+.dday b{display:block;font-size:14px;color:var(--text,#fff);margin-top:2px}
+.dday.past{opacity:.45}
+.dday.cur{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,200,80,.25)}
+.dday.nxt b{color:var(--gold)}
+.daily-status{font-size:13px;margin:12px 0;min-height:18px;color:var(--mut)}
+.daily-claim{width:100%}
+.daily-close{width:100%;margin-top:8px}
 .daily:active{transform:scale(.96)}
 .daily .gift{font-size:24px;display:block}
 .daily small{display:block;font-size:10px;color:var(--mut);margin-top:4px;line-height:1.2}
@@ -136,6 +147,17 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
 
 <div id="toast"></div>
 
+<div id="dailyModal" class="gate hidden" role="dialog" aria-modal="true" aria-labelledby="dailyTitle">
+  <div class="gate-box daily-box">
+    <h2 id="dailyTitle">Daily Rewards</h2>
+    <p class="daily-sub" id="dailySub">Réclame chaque jour. Le bonus augmente jusqu'au jour 7.</p>
+    <div class="daily-grid" id="dailyGrid"></div>
+    <div class="daily-status" id="dailyStatus"></div>
+    <button class="btn daily-claim" id="dailyClaim" type="button">Réclamer</button>
+    <button class="btn sm ghost daily-close" id="dailyClose" type="button">Fermer</button>
+  </div>
+</div>
+
 <div id="gate" class="gate hidden">
   <div class="gate-box">
     <div class="coin-mini">GRAD</div>
@@ -170,7 +192,7 @@ main{padding:0 16px 96px;max-width:520px;margin:0 auto}
       <button class="daily" id="daily" type="button" aria-label="Daily Rewards">
         <span class="gift">🎁</span>
         <span>Daily Rewards</span>
-        <small>bientôt</small>
+        <small id="dailyTag">7 jours</small>
       </button>
       <div class="stage" id="stage">
         <div class="halo"></div>
@@ -710,6 +732,58 @@ async function claimTask(id) {
   applyState(d);
 }
 
+/* ---------- Daily Rewards ---------- */
+function renderDaily() {
+  try {
+    const grid = $("#dailyGrid");
+    if (!grid || !S.me || !S.me.daily) return;
+    const dy = S.me.daily;
+    const cur = dy.day || 0;
+    const nxt = dy.next_day || 1;
+    grid.innerHTML = (dy.bonuses || []).map((b, i) => {
+      const d = i + 1;
+      let cls = "dday";
+      if (d <= cur && !dy.can_claim) cls += " past";
+      if (d === cur && !dy.can_claim) cls += " cur";
+      if (d === nxt && dy.can_claim) cls += " cur nxt";
+      if (d === nxt && !dy.can_claim) cls += " nxt";
+      return '<div class="' + cls + '">J' + d + '<b>+' + fmt(b) + '</b></div>';
+    }).join("");
+    const st = $("#dailyStatus");
+    const btn = $("#dailyClaim");
+    if (dy.can_claim) {
+      st.textContent = "Jour " + nxt + " disponible : +" + fmt(dy.next_bonus) + " " + S.cur;
+      btn.disabled = false;
+      btn.textContent = "Réclamer le jour " + nxt;
+    } else {
+      const left = Math.max(0, dy.next_claim_at - serverNow());
+      st.textContent = "Déjà réclamé aujourd'hui. Prochain bonus dans " + fmtDur(left) + ".";
+      btn.disabled = true;
+      btn.textContent = "Réclamé";
+    }
+    const tag = $("#dailyTag");
+    if (tag) tag.textContent = dy.can_claim ? "À réclamer" : "Jour " + cur + "/7";
+  } catch (e) {
+    const st = $("#dailyStatus");
+    if (st) st.textContent = "Daily Rewards indisponible pour le moment.";
+  }
+}
+
+async function claimDaily() {
+  const btn = $("#dailyClaim");
+  btn.disabled = true;
+  try {
+    const d = await call("daily_claim");
+    if (d.ok) { toast(d.message || "Bonus réclamé !", "ok"); haptic("success"); }
+    else { toast(d.error || "Bonus indisponible.", "bad"); haptic("error"); }
+    if (d.me) applyState(d);
+  } catch (e) {
+    toast("Erreur réseau, réessaie.", "bad");
+  } finally {
+    renderDaily();
+  }
+}
+
 /* ---------- Amis ---------- */
 function renderFriendsStatic() {
   if (!S.me) return;
@@ -852,12 +926,17 @@ async function loadTop() {
   }).join("") + '<div class="hint" style="text-align:center">Ton rang : #' + fmt(d.my_rank) + '</div>';
 }
 
+function safeRender(name, fn) {
+  try { fn(); }
+  catch (e) { console.error("render " + name, e); }
+}
 function renderAll() {
-  renderMine();
-  renderTasks();
-  renderFriendsStatic();
-  renderWallet();
-  renderProfile();
+  safeRender("mine", renderMine);
+  safeRender("tasks", renderTasks);
+  safeRender("friends", renderFriendsStatic);
+  safeRender("wallet", renderWallet);
+  safeRender("profile", renderProfile);
+  safeRender("daily", renderDaily);
 }
 
 /* ---------- Navigation ---------- */
@@ -886,6 +965,10 @@ function bind() {
       else window.open(url, "_blank");
     }
   });
+  $("#daily").addEventListener("click", () => { renderDaily(); $("#dailyModal").classList.remove("hidden"); });
+  $("#dailyClose").addEventListener("click", () => $("#dailyModal").classList.add("hidden"));
+  $("#dailyModal").addEventListener("click", (e) => { if (e.target.id === "dailyModal") $("#dailyModal").classList.add("hidden"); });
+  $("#dailyClaim").addEventListener("click", claimDaily);
   $("#btnCopy").addEventListener("click", copyLink);
   $("#btnShare").addEventListener("click", shareLink);
   $("#btnWallet").addEventListener("click", saveWallet);
